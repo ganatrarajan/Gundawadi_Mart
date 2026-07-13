@@ -1,0 +1,396 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/dimensions.dart';
+import '../../providers/cart_provider.dart';
+import '../../widgets/custom_button.dart';
+import '../../widgets/empty_state_widget.dart';
+import '../checkout/checkout_screen.dart';
+
+class CartScreen extends StatefulWidget {
+  final bool isTab;
+
+  const CartScreen({super.key, this.isTab = false});
+
+  @override
+  State<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
+  final TextEditingController _instructionsController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    final cart = Provider.of<CartProvider>(context, listen: false);
+    _instructionsController.text = cart.specialInstructions;
+    _instructionsController.addListener(() {
+      cart.setSpecialInstructions(_instructionsController.text);
+    });
+  }
+
+  @override
+  void dispose() {
+    _instructionsController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cart = Provider.of<CartProvider>(context);
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('My Cart'),
+        automaticallyImplyLeading: !widget.isTab,
+        actions: [
+          if (cart.items.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
+              onPressed: () {
+                _showClearConfirmationDialog(context, cart);
+              },
+            ),
+        ],
+      ),
+      body: cart.items.isEmpty
+          ? EmptyStateWidget(
+              icon: Icons.shopping_basket_outlined,
+              title: 'Your Cart is Empty',
+              subtitle: 'Add fresh vegetables from your local vendors to get started!',
+            )
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(Dimensions.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Active Vendor Banner
+                        Container(
+                          padding: const EdgeInsets.all(Dimensions.md),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryLight,
+                            borderRadius: BorderRadius.circular(Dimensions.radiusMd),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.storefront_rounded, color: AppColors.primary),
+                              const SizedBox(width: Dimensions.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Ordering From',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    Text(
+                                      cart.activeVendorName ?? '',
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: Dimensions.md),
+
+                        // Products list
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: cart.items.length,
+                          itemBuilder: (ctx, index) {
+                            final item = cart.items[index];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: Dimensions.sm),
+                              child: Padding(
+                                padding: const EdgeInsets.all(Dimensions.md),
+                                child: Row(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(Dimensions.radiusSm),
+                                      child: Image.network(
+                                        item.product.imageUrl,
+                                        height: 50,
+                                        width: 50,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            height: 50,
+                                            width: 50,
+                                            color: AppColors.primaryLight,
+                                            child: const Icon(Icons.eco_rounded, color: AppColors.primary, size: 20),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: Dimensions.md),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.product.name,
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Option: ${item.optionLabel}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: Dimensions.xs),
+                                          Text(
+                                            '₹${item.totalPrice.toStringAsFixed(0)}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    
+                                    // Qty Modifier
+                                    Row(
+                                      children: [
+                                        _QtyAction(
+                                          icon: Icons.remove_rounded,
+                                          onTap: () => cart.updateQuantity(
+                                            item.product.id,
+                                            item.optionLabel,
+                                            -1,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: Dimensions.md),
+                                          child: Text(
+                                            item.quantity.toString(),
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        _QtyAction(
+                                          icon: Icons.add_rounded,
+                                          onTap: () => cart.updateQuantity(
+                                            item.product.id,
+                                            item.optionLabel,
+                                            1,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: Dimensions.md),
+
+                        // Special Instructions
+                        const Text(
+                          'Special Instructions',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: Dimensions.xs),
+                        TextField(
+                          controller: _instructionsController,
+                          maxLines: 2,
+                          style: const TextStyle(fontSize: 14),
+                          decoration: InputDecoration(
+                            hintText: 'Example: "Please send ripe tomatoes."',
+                            fillColor: AppColors.surface,
+                            filled: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(Dimensions.radiusMd),
+                              borderSide: const BorderSide(color: AppColors.border),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: Dimensions.lg),
+
+                        // Bill Summary
+                        const Text(
+                          'Bill Details',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: Dimensions.xs),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(Dimensions.md),
+                            child: Column(
+                              children: [
+                                _SummaryRow(
+                                  label: 'Subtotal',
+                                  value: '₹${cart.subtotal.toStringAsFixed(0)}',
+                                ),
+                                const SizedBox(height: Dimensions.sm),
+                                _SummaryRow(
+                                  label: 'Delivery Charge',
+                                  value: cart.deliveryCharge == 0
+                                      ? 'FREE'
+                                      : '₹${cart.deliveryCharge.toStringAsFixed(0)}',
+                                  valueColor: cart.deliveryCharge == 0
+                                      ? AppColors.success
+                                      : AppColors.textPrimary,
+                                ),
+                                const Divider(height: Dimensions.lg, color: AppColors.border),
+                                _SummaryRow(
+                                  label: 'To Pay',
+                                  value: '₹${cart.total.toStringAsFixed(0)}',
+                                  isBold: true,
+                                  valueColor: AppColors.primary,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: Dimensions.lg),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Footer checkout trigger
+                Container(
+                  color: AppColors.surface,
+                  padding: const EdgeInsets.all(Dimensions.md),
+                  child: CustomButton(
+                    text: 'Continue Checkout',
+                    icon: Icons.check_circle_outline_rounded,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const CheckoutScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  void _showClearConfirmationDialog(BuildContext context, CartProvider cart) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Clear Cart?'),
+          content: const Text('Are you sure you want to remove all items from your cart?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                cart.clearCart();
+                Navigator.pop(ctx);
+              },
+              child: const Text('Clear', style: TextStyle(color: AppColors.error)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _QtyAction extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _QtyAction({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(Dimensions.radiusSm),
+      child: Container(
+        padding: const EdgeInsets.all(Dimensions.xs),
+        decoration: BoxDecoration(
+          color: AppColors.borderLight,
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(Dimensions.radiusSm),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: AppColors.textPrimary,
+        ),
+      ),
+    );
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isBold;
+  final Color? valueColor;
+
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.isBold = false,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isBold ? 16 : 14,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isBold ? 16 : 14,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+            color: valueColor ?? AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+}
