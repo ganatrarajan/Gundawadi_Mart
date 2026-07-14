@@ -114,7 +114,7 @@
                                     <div>{{ $order->customer->name ?? 'New Customer' }}</div>
                                     <small class="text-muted">{{ $order->customer->mobile }}</small>
                                 </td>
-                                <td>{{ $order->vendor->shop_name }}</td>
+                                <td>{{ $order->vendorOrders->map(fn($vo) => $vo->vendor->shop_name ?? '')->filter()->join(', ') }}</td>
                                 <td>₹{{ number_format($order->subtotal, 2) }}</td>
                                 <td>₹{{ number_format($order->delivery_charge, 2) }}</td>
                                 <td class="fw-bold">₹{{ number_format($order->total, 2) }}</td>

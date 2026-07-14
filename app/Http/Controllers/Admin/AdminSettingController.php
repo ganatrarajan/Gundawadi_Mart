@@ -14,6 +14,9 @@ class AdminSettingController extends Controller
         $platformFee = Setting::getValue('platform_fee', '10.00');
         $showHandlingCharge = Setting::getValue('show_handling_charge', 'yes');
         $showPlatformFee = Setting::getValue('show_platform_fee', 'yes');
+        $allowTodayDelivery = Setting::getValue('allow_today_delivery', 'yes');
+        $supportName = Setting::getValue('support_name', 'Gundawadi Mart Support');
+        $supportMobile = Setting::getValue('support_mobile', '9876543210');
 
         $deliverySlots = \App\Models\DeliverySlot::all();
         if ($deliverySlots->isEmpty()) {
@@ -34,6 +37,9 @@ class AdminSettingController extends Controller
             'platformFee',
             'showHandlingCharge',
             'showPlatformFee',
+            'allowTodayDelivery',
+            'supportName',
+            'supportMobile',
             'deliverySlots'
         ));
     }
@@ -45,12 +51,18 @@ class AdminSettingController extends Controller
             'platform_fee' => 'required|numeric|min:0',
             'show_handling_charge' => 'required|in:yes,no',
             'show_platform_fee' => 'required|in:yes,no',
+            'allow_today_delivery' => 'required|in:yes,no',
+            'support_name' => 'required|string|max:255',
+            'support_mobile' => 'required|string|max:20',
         ]);
 
         Setting::setValue('handling_charge', $request->input('handling_charge'));
         Setting::setValue('platform_fee', $request->input('platform_fee'));
         Setting::setValue('show_handling_charge', $request->input('show_handling_charge'));
         Setting::setValue('show_platform_fee', $request->input('show_platform_fee'));
+        Setting::setValue('allow_today_delivery', $request->input('allow_today_delivery'));
+        Setting::setValue('support_name', $request->input('support_name'));
+        Setting::setValue('support_mobile', $request->input('support_mobile'));
 
         return redirect()->route('admin.settings.index')->with('success', 'System settings updated successfully.');
     }

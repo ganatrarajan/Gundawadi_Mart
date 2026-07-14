@@ -24,6 +24,9 @@ class CustomerResource extends JsonResource
             'platform_fee' => (double) \App\Models\Setting::getValue('platform_fee', 10.0),
             'show_handling_charge' => \App\Models\Setting::getValue('show_handling_charge', 'yes') === 'yes',
             'show_platform_fee' => \App\Models\Setting::getValue('show_platform_fee', 'yes') === 'yes',
+            'allow_today_delivery' => \App\Models\Setting::getValue('allow_today_delivery', 'yes') === 'yes',
+            'support_name' => \App\Models\Setting::getValue('support_name', 'Gundawadi Mart Support'),
+            'support_mobile' => \App\Models\Setting::getValue('support_mobile', '9876543210'),
             'delivery_time_slots' => \App\Models\DeliverySlot::where('is_active', true)->get()->map(function($slot) {
                 return $slot->start_time . ' - ' . $slot->end_time;
             })->toArray(),

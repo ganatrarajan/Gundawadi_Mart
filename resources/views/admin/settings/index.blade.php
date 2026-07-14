@@ -72,6 +72,36 @@
                     </div>
                 </div>
 
+                <!-- Accept Same-Day Orders -->
+                <div class="card p-3 mb-4 border border-light shadow-sm">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <label for="allow_today_delivery" class="form-label fw-bold">Accept Same-Day (Today's) Orders</label>
+                            <div class="form-text text-muted mb-2">Turn off to completely disable delivery options for "Today" (only "Tomorrow" delivery slots will be available).</div>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="allow_today_delivery" name="allow_today_delivery" required>
+                                <option value="yes" {{ old('allow_today_delivery', $allowTodayDelivery) === 'yes' ? 'selected' : '' }}>Enabled (Yes)</option>
+                                <option value="no" {{ old('allow_today_delivery', $allowTodayDelivery) === 'no' ? 'selected' : '' }}>Disabled (No)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Support Contact Details -->
+                <div class="card p-3 mb-4 border border-light shadow-sm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="support_name" class="form-label fw-bold">Support Contact Name</label>
+                            <input type="text" class="form-control" id="support_name" name="support_name" value="{{ old('support_name', $supportName) }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="support_mobile" class="form-label fw-bold">Support Contact Mobile</label>
+                            <input type="text" class="form-control" id="support_mobile" name="support_mobile" value="{{ old('support_mobile', $supportMobile) }}" required>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Actions -->
                 <div class="text-end mt-4">
                     <button type="submit" class="btn btn-primary-custom px-4 py-2">

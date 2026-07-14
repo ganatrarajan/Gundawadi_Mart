@@ -78,15 +78,37 @@ class OrderResource extends JsonResource
             ];
         }
 
+        $isMaster = (get_class($this->resource) === 'App\Models\MasterOrder');
+
+        if ($isMaster) {
+            $firstVendorOrder = $this->vendorOrders->first();
+            $vendorId = $firstVendorOrder ? $firstVendorOrder->vendor_id : 0;
+            $vendorShopName = $this->vendorOrders->map(fn($vo) => $vo->vendor->shop_name ?? '')->filter()->join(', ');
+            $vendorOwnerName = $this->vendorOrders->map(fn($vo) => $vo->vendor->owner_name ?? '')->filter()->join(', ');
+            $vendorMobile = $this->vendorOrders->map(fn($vo) => $vo->vendor->mobile_number ?? '')->filter()->join(', ');
+            $items = [];
+            foreach ($this->vendorOrders as $vo) {
+                foreach ($vo->items as $item) {
+                    $items[] = new OrderItemResource($item);
+                }
+            }
+        } else {
+            $vendorId = $this->vendor_id;
+            $vendorShopName = $this->vendor ? $this->vendor->shop_name : null;
+            $vendorOwnerName = $this->vendor ? $this->vendor->owner_name : null;
+            $vendorMobile = $this->vendor ? $this->vendor->mobile_number : null;
+            $items = OrderItemResource::collection($this->whenLoaded('items'));
+        }
+
         return [
             'id' => $this->id,
             'customer_id' => $this->customer_id,
             'customer_name' => $this->customer ? $this->customer->name : null,
             'customer_mobile' => ($isVendor || !$this->customer) ? null : $this->customer->mobile,
-            'vendor_id' => $this->vendor_id,
-            'vendor_shop_name' => $this->vendor ? $this->vendor->shop_name : null,
-            'vendor_owner_name' => $this->vendor ? $this->vendor->owner_name : null,
-            'vendor_mobile' => $this->vendor ? $this->vendor->mobile_number : null,
+            'vendor_id' => $vendorId,
+            'vendor_shop_name' => $vendorShopName,
+            'vendor_owner_name' => $vendorOwnerName,
+            'vendor_mobile' => $vendorMobile,
             'address_id' => $this->address_id,
             'delivery_address' => $deliveryAddress,
             'timeline' => $milestones,
@@ -99,8 +121,9 @@ class OrderResource extends JsonResource
             'status' => $this->status,
             'special_note' => $this->special_note,
             'delivery_slot' => $this->delivery_slot,
-            'items' => OrderItemResource::collection($this->whenLoaded('items')),
+            'items' => $items,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
+            'is_master' => $isMaster,
         ];
     }
 }

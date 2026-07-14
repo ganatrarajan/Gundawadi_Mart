@@ -38,6 +38,8 @@ class VendorResource extends JsonResource
             'closing_time' => $this->closing_time ?? '08:00 PM',
             'status' => $this->status,
             'is_open' => $isOpen,
+            'support_name' => \App\Models\Setting::getValue('support_name', 'Gundawadi Mart Support'),
+            'support_mobile' => \App\Models\Setting::getValue('support_mobile', '9876543210'),
         ];
     }
 }

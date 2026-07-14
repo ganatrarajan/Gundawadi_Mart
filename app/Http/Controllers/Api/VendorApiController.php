@@ -191,22 +191,30 @@ class VendorApiController extends Controller
             'ready_for_pickup' => 'packed and is ready for pickup.',
         ];
 
+        $orderIdText = $order->master_order_id ? "Market Order #{$order->master_order_id}" : "Order #{$order->id}";
+        $msgText = $order->master_order_id 
+            ? "Your items from \"{$order->vendor->shop_name}\" under order #{$order->master_order_id} are " . ($statusTexts[$status] ?? $status)
+            : "Your order has been " . ($statusTexts[$status] ?? $status);
+
         FcmService::send(
             'customer',
             $order->customer_id,
             $order->customer->device_token,
-            "Order #{$order->id} Update",
-            "Your order has been " . ($statusTexts[$status] ?? $status)
+            "{$orderIdText} Update",
+            $msgText
         );
 
         // If ready for pickup, notify admin (log/db)
         if ($status === 'ready_for_pickup') {
+            $adminMsg = $order->master_order_id
+                ? "Items from {$order->vendor->shop_name} for order #{$order->master_order_id} are ready for pickup."
+                : "Order #{$order->id} from {$order->vendor->shop_name} is ready for pickup. Please allocate delivery.";
             FcmService::send(
                 'admin',
                 1, // default admin id
                 null,
                 "Delivery Pickup Alert",
-                "Order #{$order->id} from {$order->vendor->shop_name} is ready for pickup. Please allocate delivery."
+                $adminMsg
             );
         }
 
@@ -217,6 +225,8 @@ class VendorApiController extends Controller
     {
         $vendorId = $request->user()->id;
         $request->validate(['device_token' => 'required|string']);
+
+        \Log::info("Vendor ID {$vendorId} attempting to update device token to: " . $request->input('device_token'));
 
         $this->vendorRepository->update($vendorId, [
             'device_token' => $request->input('device_token')

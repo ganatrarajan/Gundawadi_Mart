@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Order extends Model
+class MasterOrder extends Model
 {
     use HasFactory;
 
+    protected $table = 'master_orders';
+
     protected $fillable = [
         'customer_id',
-        'master_order_id',
-        'vendor_id',
         'address_id',
         'delivery_address',
         'subtotal',
@@ -39,23 +39,20 @@ class Order extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function vendor()
-    {
-        return $this->belongsTo(Vendor::class);
-    }
-
     public function address()
     {
         return $this->belongsTo(Address::class);
     }
 
-    public function items()
+    public function vendorOrders()
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->hasMany(Order::class, 'master_order_id');
     }
 
-    public function masterOrder()
+    public function getItemsAttribute()
     {
-        return $this->belongsTo(MasterOrder::class, 'master_order_id');
+        return $this->vendorOrders->flatMap(function ($vo) {
+            return $vo->items;
+        });
     }
 }

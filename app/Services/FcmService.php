@@ -58,6 +58,8 @@ class FcmService
                         'data' => [
                             'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                             'sound' => 'default',
+                            'title' => (string) $title,
+                            'body' => (string) $body,
                         ],
                     ],
                 ]);

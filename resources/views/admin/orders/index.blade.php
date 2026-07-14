@@ -56,7 +56,7 @@
                             <div>{{ $order->customer->name ?? 'New Customer' }}</div>
                             <small class="text-muted">{{ $order->customer->mobile }}</small>
                         </td>
-                        <td>{{ $order->vendor->shop_name }}</td>
+                        <td>{{ $order->vendorOrders->map(fn($vo) => $vo->vendor->shop_name ?? '')->filter()->join(', ') }}</td>
                         <td>
                             @if($order->delivery_slot)
                                 <span class="badge bg-info-subtle text-info border border-info px-2 py-1 fw-bold">

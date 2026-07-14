@@ -18,27 +18,45 @@
         <!-- Order Items -->
         <div class="card card-custom bg-white p-4 mb-4">
             <h5 class="fw-bold mb-3 text-success"><i class="bi bi-bag-check me-2"></i>Ordered items</h5>
-            <div class="table-responsive">
+            
+            @foreach($order->vendorOrders as $vendorOrder)
+                <div class="mb-4 p-3 bg-light rounded border">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-success m-0">
+                            <i class="bi bi-shop me-1"></i>{{ $vendorOrder->vendor->shop_name }}
+                        </h6>
+                        <span class="badge bg-secondary text-uppercase">{{ str_replace('_', ' ', $vendorOrder->status) }}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle table-sm m-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Unit</th>
+                                    <th>Price</th>
+                                    <th>Qty</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($vendorOrder->items as $item)
+                                    <tr>
+                                        <td class="fw-bold">{{ $item->product_name }}</td>
+                                        <td>{{ $item->unit }}</td>
+                                        <td>₹{{ number_format($item->price, 2) }}</td>
+                                        <td>{{ $item->quantity }}</td>
+                                        <td class="text-end fw-bold">₹{{ number_format($item->total_price, 2) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endforeach
+
+            <div class="table-responsive mt-3">
                 <table class="table align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Item Name</th>
-                            <th>Unit</th>
-                            <th>Price</th>
-                            <th>Qty</th>
-                            <th class="text-end">Total</th>
-                        </tr>
-                    </thead>
                     <tbody>
-                        @foreach($order->items as $item)
-                            <tr>
-                                <td class="fw-bold">{{ $item->product_name }}</td>
-                                <td>{{ $item->unit }}</td>
-                                <td>₹{{ number_format($item->price, 2) }}</td>
-                                <td>{{ $item->quantity }}</td>
-                                <td class="text-end fw-bold">₹{{ number_format($item->total_price, 2) }}</td>
-                            </tr>
-                        @endforeach
                         <tr>
                             <td colspan="4" class="text-end fw-bold py-3">Subtotal</td>
                             <td class="text-end fw-bold py-3">₹{{ number_format($order->subtotal, 2) }}</td>
@@ -158,18 +176,25 @@
 
             <hr>
 
-            <!-- Vendor -->
+            <!-- Vendors -->
             <div>
-                <h6 class="fw-bold text-secondary small text-uppercase">Vendor Information</h6>
-                <div class="d-flex align-items-start mt-2">
-                    <div class="fs-1 text-secondary me-3"><i class="bi bi-shop"></i></div>
-                    <div>
-                        <div class="fw-bold">{{ $order->vendor->shop_name }}</div>
-                        <div class="small text-muted">{{ $order->vendor->owner_name }}</div>
-                        <a href="tel:{{ $order->vendor->mobile_number }}" class="text-decoration-none small"><i class="bi bi-telephone-fill me-1"></i>{{ $order->vendor->mobile_number }}</a>
-                        <div class="small text-muted mt-1">{{ $order->vendor->shop_address }}</div>
+                <h6 class="fw-bold text-secondary small text-uppercase mb-3">Vendors Information</h6>
+                @foreach($order->vendorOrders as $vendorOrder)
+                    <div class="d-flex align-items-start mt-2 mb-3">
+                        <div class="fs-2 text-secondary me-3"><i class="bi bi-shop"></i></div>
+                        <div>
+                            <div class="fw-bold">{{ $vendorOrder->vendor->shop_name }}</div>
+                            <div class="small text-muted">{{ $vendorOrder->vendor->owner_name }}</div>
+                            <a href="tel:{{ $vendorOrder->vendor->mobile_number }}" class="text-decoration-none small">
+                                <i class="bi bi-telephone-fill me-1"></i>{{ $vendorOrder->vendor->mobile_number }}
+                            </a>
+                            <div class="small text-muted mt-1" style="font-size: 0.8rem;">{{ $vendorOrder->vendor->shop_address }}</div>
+                        </div>
                     </div>
-                </div>
+                    @if(!$loop->last)
+                        <hr class="my-2 border-dashed">
+                    @endif
+                @endforeach
             </div>
         </div>
     </div>

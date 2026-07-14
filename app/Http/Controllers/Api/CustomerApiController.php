@@ -103,14 +103,12 @@ class CustomerApiController extends Controller
             return $this->errorResponse('Delivery details have not been assigned by admin yet. You cannot place orders.', 403);
         }
 
-        $vendorId = $request->input('vendor_id');
         $inputItems = $request->input('items');
         $specialNote = $request->input('special_note');
         $deliverySlot = $request->input('delivery_slot');
 
-        $vendor = $this->vendorRepository->findById($vendorId);
-        if (!$vendor || $vendor->status !== 'active') {
-            return $this->errorResponse('Vendor is not active or does not exist.', 422);
+        if (empty($inputItems)) {
+            return $this->errorResponse('Cart is empty. Cannot place order.', 422);
         }
 
         // Always use the approved address for order delivery
@@ -138,8 +136,8 @@ class CustomerApiController extends Controller
 
         foreach ($inputItems as $item) {
             $product = $this->productRepository->findById($item['product_id']);
-            if (!$product || $product->vendor_id !== (int) $vendorId || $product->status !== 'active') {
-                return $this->errorResponse("Product ID {$item['product_id']} is not available from this vendor.", 422);
+            if (!$product || $product->status !== 'active') {
+                return $this->errorResponse("Product ID {$item['product_id']} is not available.", 422);
             }
 
             $price = isset($item['price']) ? (float) $item['price'] : (float) $product->today_price;
@@ -168,7 +166,6 @@ class CustomerApiController extends Controller
         // Order primary data using the customer's assigned delivery charge
         $orderData = [
             'customer_id' => $customer->id,
-            'vendor_id' => $vendorId,
             'delivery_address' => $addressSnapshot,
             'address_id' => $addressId,
             'subtotal' => $subtotal,
@@ -181,7 +178,7 @@ class CustomerApiController extends Controller
             'delivery_slot' => $deliverySlot,
         ];
 
-        $order = $this->orderRepository->create($orderData, $itemsData);
+        $masterOrder = $this->orderRepository->create($orderData, $itemsData);
 
         // Update customer name if it is empty
         if (empty($customer->name)) {
@@ -196,10 +193,19 @@ class CustomerApiController extends Controller
             $customer->id,
             $customer->device_token,
             'Order Placed successfully',
-            "Your order #{$order->id} at {$vendor->shop_name} has been placed. Waiting for shop acceptance."
+            "Your multi-vendor order #{$masterOrder->id} has been placed. Waiting for admin approval."
         );
 
-        return $this->successResponse(new OrderResource($order), 'Order placed successfully.', 201);
+        // Send notification to Admin
+        FcmService::send(
+            'admin',
+            1,
+            null,
+            'New Order Placed',
+            "A new Master Order #{$masterOrder->id} of ₹" . number_format($masterOrder->total, 2) . " has been placed and is pending approval."
+        );
+
+        return $this->successResponse(new OrderResource($masterOrder), 'Order placed successfully.', 201);
     }
 
     public function getOrders(Request $request)
@@ -212,7 +218,7 @@ class CustomerApiController extends Controller
     public function getOrderDetails($orderId, Request $request)
     {
         $customerId = $request->user()->id;
-        $order = $this->orderRepository->findById($orderId);
+        $order = $this->orderRepository->findMasterById($orderId);
 
         if (!$order || $order->customer_id !== $customerId) {
             return $this->errorResponse('Order not found.', 404);
@@ -234,7 +240,7 @@ class CustomerApiController extends Controller
             return $this->errorResponse('Delivery details have not been assigned by admin yet. You cannot place orders.', 403);
         }
 
-        $oldOrder = $this->orderRepository->findById($orderId);
+        $oldOrder = $this->orderRepository->findMasterById($orderId);
 
         if (!$oldOrder || $oldOrder->customer_id !== $customerId) {
             return $this->errorResponse('Original order not found.', 404);
@@ -263,17 +269,11 @@ class CustomerApiController extends Controller
         // Prepare items array
         $itemsData = [];
         $subtotal = 0;
-        $vendorId = $oldOrder->vendor_id;
-
-        $vendor = $this->vendorRepository->findById($vendorId);
-        if (!$vendor || $vendor->status !== 'active') {
-            return $this->errorResponse('Vendor is currently inactive.', 422);
-        }
 
         foreach ($oldOrder->items as $item) {
             $product = $this->productRepository->findById($item->product_id);
-            if (!$product || $product->status !== 'active') {
-                return $this->errorResponse("Product '{$item->product_name}' is currently unavailable.", 422);
+            if (!$product || $product->status !== 'active' || !$product->vendor || $product->vendor->status !== 'active') {
+                return $this->errorResponse("Product '{$item->product_name}' or its vendor is currently unavailable.", 422);
             }
 
             $price = (float) $product->today_price;
@@ -291,17 +291,25 @@ class CustomerApiController extends Controller
             ];
         }
 
+        $showHandling = \App\Models\Setting::getValue('show_handling_charge', 'yes') === 'yes';
+        $showPlatform = \App\Models\Setting::getValue('show_platform_fee', 'yes') === 'yes';
+        
+        $handlingCharge = $showHandling ? (double) \App\Models\Setting::getValue('handling_charge', 5.0) : 0.0;
+        $platformFee = $showPlatform ? (double) \App\Models\Setting::getValue('platform_fee', 10.0) : 0.0;
+
         $orderData = [
             'customer_id' => $customerId,
-            'vendor_id' => $vendorId,
             'address_id' => $addressId,
             'delivery_address' => $addressSnapshot,
             'subtotal' => $subtotal,
             'delivery_charge' => (float) $customer->delivery_charge,
-            'total' => $subtotal + (float) $customer->delivery_charge,
+            'handling_charge' => $handlingCharge,
+            'platform_fee' => $platformFee,
+            'total' => $subtotal + (float) $customer->delivery_charge + $handlingCharge + $platformFee,
             'payment_method' => 'cash_on_delivery',
             'status' => 'pending',
             'special_note' => $oldOrder->special_note,
+            'delivery_slot' => $oldOrder->delivery_slot,
         ];
 
         $newOrder = $this->orderRepository->create($orderData, $itemsData);
@@ -312,7 +320,16 @@ class CustomerApiController extends Controller
             $customerId,
             $request->user()->device_token,
             'Reorder Placed successfully',
-            "Your reorder #{$newOrder->id} at {$vendor->shop_name} has been placed."
+            "Your reorder #{$newOrder->id} has been placed."
+        );
+
+        // Send notification to Admin
+        FcmService::send(
+            'admin',
+            1,
+            null,
+            'New Reorder Placed',
+            "A new Master Reorder #{$newOrder->id} of ₹" . number_format($newOrder->total, 2) . " has been placed by the customer."
         );
 
         return $this->successResponse(new OrderResource($newOrder), 'Reorder placed successfully.', 201);
@@ -365,6 +382,8 @@ class CustomerApiController extends Controller
         $customerId = $request->user()->id;
         $request->validate(['device_token' => 'required|string']);
 
+        \Log::info("Customer ID {$customerId} attempting to update device token to: " . $request->input('device_token'));
+
         $this->customerRepository->update($customerId, [
             'device_token' => $request->input('device_token')
         ]);
@@ -380,6 +399,42 @@ class CustomerApiController extends Controller
     public function cancelOrder($id, Request $request)
     {
         $customerId = $request->user()->id;
+
+        // Try to find MasterOrder first
+        $masterOrder = \App\Models\MasterOrder::where('id', $id)->where('customer_id', $customerId)->first();
+        if ($masterOrder) {
+            if (!in_array($masterOrder->status, ['pending'])) {
+                return $this->errorResponse('Order cannot be cancelled once it has been accepted or processed.', 422);
+            }
+
+            $masterOrder->update(['status' => 'cancelled']);
+
+            // Cancel and notify all sub-orders
+            foreach ($masterOrder->vendorOrders as $subOrder) {
+                $subOrder->update(['status' => 'cancelled']);
+
+                \App\Services\FcmService::send(
+                    'vendor',
+                    $subOrder->vendor_id,
+                    $subOrder->vendor->device_token,
+                    "Order #{$subOrder->id} Cancelled",
+                    "Order #{$subOrder->id} has been cancelled by the customer."
+                );
+            }
+
+            // Notify Admin
+            \App\Services\FcmService::send(
+                'admin',
+                1,
+                null,
+                "Master Order #{$masterOrder->id} Cancelled",
+                "Customer cancelled Master Order #{$masterOrder->id}."
+            );
+
+            return $this->successResponse(new OrderResource($masterOrder), 'Order cancelled successfully.');
+        }
+
+        // Fallback to legacy single-vendor Order
         $order = \App\Models\Order::where('id', $id)->first();
 
         if (!$order || $order->customer_id !== $customerId) {
@@ -399,6 +454,15 @@ class CustomerApiController extends Controller
             $order->vendor->device_token,
             "Order #{$order->id} Cancelled",
             "Order #{$order->id} has been cancelled by the customer."
+        );
+
+        // Notify Admin
+        \App\Services\FcmService::send(
+            'admin',
+            1,
+            null,
+            "Order #{$order->id} Cancelled",
+            "Customer cancelled Order #{$order->id}."
         );
 
         return $this->successResponse(new OrderResource($order), 'Order cancelled successfully.');
