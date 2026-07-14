@@ -198,7 +198,10 @@ class DashboardScreen extends StatelessWidget {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const OrderListScreen(initialStatusFilter: 'Pending'),
+                                builder: (_) => const OrderListScreen(
+                                  initialStatusFilter: 'Pending',
+                                  initialDateFilter: 'Today',
+                                ),
                               ),
                             ),
                           ),
@@ -211,7 +214,10 @@ class DashboardScreen extends StatelessWidget {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const OrderListScreen(initialStatusFilter: 'Completed'),
+                                builder: (_) => const OrderListScreen(
+                                  initialStatusFilter: 'Completed',
+                                  initialDateFilter: 'Today',
+                                ),
                               ),
                             ),
                           ),
@@ -224,7 +230,10 @@ class DashboardScreen extends StatelessWidget {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const OrderListScreen(initialStatusFilter: 'All'),
+                                builder: (_) => const OrderListScreen(
+                                  initialStatusFilter: 'All',
+                                  initialDateFilter: 'Today',
+                                ),
                               ),
                             ),
                           ),

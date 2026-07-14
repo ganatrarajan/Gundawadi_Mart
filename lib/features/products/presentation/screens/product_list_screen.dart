@@ -224,74 +224,21 @@ class _ProductCardWidgetState extends State<_ProductCardWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 6),
-                _isEditing
-                    ? Row(
-                        children: [
-                          SizedBox(
-                            width: 90,
-                            height: 38,
-                            child: TextField(
-                              controller: _priceController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                              decoration: const InputDecoration(
-                                prefixText: '₹',
-                                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text('/ ${widget.product.unit}'),
-                          const SizedBox(width: 8),
-                          _isSaving
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                                )
-                              : IconButton(
-                                  icon: const Icon(Icons.check_circle, color: AppColors.completed, size: 28),
-                                  onPressed: _savePrice,
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                ),
-                          const SizedBox(width: 6),
-                          IconButton(
-                            icon: const Icon(Icons.cancel, color: AppColors.rejected, size: 28),
-                            onPressed: () {
-                              setState(() {
-                                _isEditing = false;
-                                _priceController.text = widget.product.price.toString();
-                              });
-                            },
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ],
-                      )
-                    : InkWell(
-                        onTap: () {
-                          setState(() {
-                            _isEditing = true;
-                          });
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '₹${widget.product.price} / ${widget.product.unit}',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Icon(Icons.edit, size: 16, color: AppColors.primary),
-                          ],
-                        ),
-                      ),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _isEditing = true;
+                    });
+                  },
+                  child: Text(
+                    '₹${widget.product.price} / ${widget.product.unit}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -334,6 +281,32 @@ class _ProductCardWidgetState extends State<_ProductCardWidget> {
               },
             ),
           ),
+          if (_isEditing) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _priceController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      decoration: InputDecoration(
+                        labelText: 'Today\'s Price',
+                        prefixText: '₹ ',
+                        suffixText: ' / ${widget.product.unit}',
+                        suffixStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        border: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const Divider(height: 1, thickness: 1, color: AppColors.border),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
@@ -349,32 +322,68 @@ class _ProductCardWidgetState extends State<_ProductCardWidget> {
                     ),
                     onPressed: () {
                       setState(() {
-                        _isEditing = !_isEditing;
+                        if (_isEditing) {
+                          _isEditing = false;
+                          _priceController.text = widget.product.price.toString();
+                        } else {
+                          _isEditing = true;
+                        }
                       });
                     },
-                    icon: const Icon(Icons.edit_calendar_rounded, size: 20),
-                    label: Text(_isEditing ? 'CANCEL EDIT' : 'CHANGE PRICE', style: const TextStyle(fontSize: 15)),
+                    icon: Icon(
+                      _isEditing ? Icons.cancel_outlined : Icons.edit_calendar_rounded,
+                      size: 20,
+                      color: _isEditing ? AppColors.rejected : AppColors.primary,
+                    ),
+                    label: Text(
+                      _isEditing ? 'CANCEL' : 'CHANGE PRICE',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: _isEditing ? AppColors.rejected : AppColors.primary,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.secondary,
+                      backgroundColor: _isEditing ? AppColors.completed : AppColors.secondary,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       minimumSize: Size.zero,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AddEditProductScreen(product: widget.product),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.edit, size: 20, color: Colors.white),
-                    label: const Text('EDIT DETAILS', style: TextStyle(fontSize: 15, color: Colors.white)),
+                    onPressed: _isSaving
+                        ? null
+                        : () {
+                            if (_isEditing) {
+                              _savePrice();
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AddEditProductScreen(product: widget.product),
+                                ),
+                              );
+                            }
+                          },
+                    icon: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : Icon(
+                            _isEditing ? Icons.check_circle_outline : Icons.edit,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                    label: Text(
+                      _isSaving
+                          ? 'SAVING...'
+                          : (_isEditing ? 'SAVE' : 'EDIT DETAILS'),
+                      style: const TextStyle(fontSize: 15, color: Colors.white),
+                    ),
                   ),
                 ),
               ],

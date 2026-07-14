@@ -10,8 +10,13 @@ import 'order_details_screen.dart';
 
 class OrderListScreen extends StatefulWidget {
   final String initialStatusFilter; // 'All', 'Pending', 'Completed', etc.
+  final String initialDateFilter; // 'All', 'Today', 'Yesterday', etc.
 
-  const OrderListScreen({super.key, this.initialStatusFilter = 'All'});
+  const OrderListScreen({
+    super.key,
+    this.initialStatusFilter = 'All',
+    this.initialDateFilter = 'All',
+  });
 
   @override
   State<OrderListScreen> createState() => _OrderListScreenState();
@@ -21,10 +26,13 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
   late TabController _tabController;
 
   final List<String> _tabNames = ['ALL', 'PENDING', 'ACTIVE', 'COMPLETED'];
+  String _searchQuery = '';
+  String _dateFilter = 'All'; // 'All', 'Today', 'Yesterday', 'Last 7 Days'
 
   @override
   void initState() {
     super.initState();
+    _dateFilter = widget.initialDateFilter;
     int initialIdx = 0;
     if (widget.initialStatusFilter == 'Pending') {
       initialIdx = 1;
@@ -32,6 +40,11 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
       initialIdx = 3;
     }
     _tabController = TabController(length: _tabNames.length, vsync: this, initialIndex: initialIdx);
+    
+    // Automatically fetch latest orders when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<OrderProvider>(context, listen: false).fetchOrders();
+    });
   }
 
   @override
@@ -57,90 +70,236 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
           tabs: _tabNames.map((name) => Tab(text: name)).toList(),
         ),
       ),
-      body: Consumer<OrderProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading && provider.orders.isEmpty) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-          }
+      body: Column(
+        children: [
+          _buildFilterPanel(),
+          Expanded(
+            child: Consumer<OrderProvider>(
+              builder: (context, provider, _) {
+                if (provider.isLoading && provider.orders.isEmpty) {
+                  return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                }
 
-          if (provider.errorMessage != null && provider.orders.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 60, color: AppColors.rejected),
-                    const SizedBox(height: 16),
-                    Text(provider.errorMessage!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18)),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => provider.fetchOrders(),
-                      child: const Text('TRY AGAIN'),
-                    )
-                  ],
-                ),
-              ),
-            );
-          }
-
-          return TabBarView(
-            controller: _tabController,
-            children: _tabNames.map((tab) {
-              final filteredList = _getFilteredOrders(provider.orders, tab);
-              
-              if (filteredList.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.assignment_turned_in_outlined, size: 80, color: Colors.grey.shade400),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No orders in $tab',
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
-                        ),
-                      ],
+                if (provider.errorMessage != null && provider.orders.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline, size: 60, color: AppColors.rejected),
+                          const SizedBox(height: 16),
+                          Text(provider.errorMessage!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18)),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () => provider.fetchOrders(),
+                            child: const Text('TRY AGAIN'),
+                          )
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              }
+                  );
+                }
 
-              return RefreshIndicator(
-                onRefresh: () => provider.fetchOrders(),
-                child: ResponsiveLayout(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: filteredList.length,
-                    itemBuilder: (context, index) {
-                      final order = filteredList[index];
-                      return _buildOrderCard(context, order, provider, currencyFormatter);
-                    },
-                  ),
-                ),
-              );
-            }).toList(),
-          );
-        },
+                return TabBarView(
+                  controller: _tabController,
+                  children: _tabNames.map((tab) {
+                    final filteredList = _getFilteredOrders(provider.orders, tab);
+                    
+                    if (filteredList.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.assignment_turned_in_outlined, size: 80, color: Colors.grey.shade400),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No orders in $tab',
+                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: () => provider.fetchOrders(),
+                      child: ResponsiveLayout(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(12),
+                          itemCount: filteredList.length,
+                          itemBuilder: (context, index) {
+                            final order = filteredList[index];
+                            return _buildOrderCard(context, order, provider, currencyFormatter);
+                          },
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 
   List<Order> _getFilteredOrders(List<Order> list, String tab) {
+    // 1. Sort orders by date-time descending (newest first)
+    final sortedList = List<Order>.from(list);
+    sortedList.sort((a, b) {
+      try {
+        final dateA = DateTime.parse(a.createdAt);
+        final dateB = DateTime.parse(b.createdAt);
+        return dateB.compareTo(dateA); // Descending (newest first)
+      } catch (e) {
+        final idA = int.tryParse(a.id) ?? 0;
+        final idB = int.tryParse(b.id) ?? 0;
+        return idB.compareTo(idA);
+      }
+    });
+
+    // 2. Filter by tab
+    List<Order> tabFiltered;
     switch (tab) {
       case 'PENDING':
-        return list.where((o) => ['accepted', 'packing'].contains(o.status.toLowerCase())).toList();
+        tabFiltered = sortedList.where((o) => ['accepted', 'packing'].contains(o.status.toLowerCase())).toList();
+        break;
       case 'ACTIVE':
         final active = ['accepted', 'packing', 'ready for pickup', 'ready_for_pickup', 'out for delivery', 'out_for_delivery'];
-        return list.where((o) => active.contains(o.status.toLowerCase())).toList();
+        tabFiltered = sortedList.where((o) => active.contains(o.status.toLowerCase())).toList();
+        break;
       case 'COMPLETED':
         final completed = ['ready_for_pickup', 'ready for pickup', 'completed', 'delivered', 'rejected', 'cancelled'];
-        return list.where((o) => completed.contains(o.status.toLowerCase())).toList();
+        tabFiltered = sortedList.where((o) => completed.contains(o.status.toLowerCase())).toList();
+        break;
       default:
-        return list;
+        tabFiltered = sortedList;
     }
+
+    // 3. Filter by search query (Order ID or Customer Name)
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      tabFiltered = tabFiltered.where((o) {
+        return o.id.toLowerCase().contains(query) ||
+               o.customerName.toLowerCase().contains(query);
+      }).toList();
+    }
+
+    // 4. Filter by date option
+    if (_dateFilter != 'All') {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final yesterday = today.subtract(const Duration(days: 1));
+      final sevenDaysAgo = today.subtract(const Duration(days: 7));
+
+      tabFiltered = tabFiltered.where((o) {
+        try {
+          final orderDate = DateTime.parse(o.createdAt);
+          if (_dateFilter == 'Today') {
+            return orderDate.isAfter(today);
+          } else if (_dateFilter == 'Yesterday') {
+            return orderDate.isAfter(yesterday) && orderDate.isBefore(today);
+          } else if (_dateFilter == 'Last 7 Days') {
+            return orderDate.isAfter(sevenDaysAgo);
+          }
+        } catch (_) {}
+        return true;
+      }).toList();
+    }
+
+    return tabFiltered;
+  }
+
+  Widget _buildFilterPanel() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Search Field
+          Expanded(
+            child: Container(
+              height: 45,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: TextField(
+                onChanged: (val) {
+                  setState(() {
+                    _searchQuery = val;
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search ID, Customer...',
+                  hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.grey, size: 18),
+                          onPressed: () {
+                            setState(() {
+                              _searchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Date Filter Dropdown
+          Container(
+            height: 45,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _dateFilter,
+                icon: const Icon(Icons.filter_list, color: AppColors.primary),
+                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _dateFilter = newValue;
+                    });
+                  }
+                },
+                items: <String>['All', 'Today', 'Yesterday', 'Last 7 Days']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildOrderCard(BuildContext context, Order order, OrderProvider provider, NumberFormat currency) {
@@ -285,23 +444,6 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
                   type: ButtonType.primary,
                   height: 50,
                   onPressed: () => _confirmStatusChange(context, order.id, 'Ready For Pickup', provider),
-                ),
-              ] else ...[
-                // Detail shortcut
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => OrderDetailsScreen(orderId: order.id),
-                      ),
-                    );
-                  },
-                  child: const Text('VIEW DETAILS & RECEIPT', style: TextStyle(fontSize: 16)),
                 ),
               ],
             ],
