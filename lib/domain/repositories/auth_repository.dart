@@ -19,4 +19,5 @@ abstract class AuthRepository {
     required String pincode,
   });
   Future<void> logout();
+  Future<void> updateDeviceToken(String token);
 }

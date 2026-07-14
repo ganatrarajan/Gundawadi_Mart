@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/dimensions.dart';
 import '../../data/models/vendor_model.dart';
+import '../providers/auth_provider.dart';
 import '../screens/vendor/vendor_details_screen.dart';
 
 class VendorCard extends StatelessWidget {
@@ -16,6 +18,33 @@ class VendorCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
+          final auth = Provider.of<AuthProvider>(context, listen: false);
+          final user = auth.currentUser;
+          if (user != null && user.deliveryTimeSlots.isEmpty) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: AppColors.warning),
+                    SizedBox(width: Dimensions.sm),
+                    Text('No Delivery Slots'),
+                  ],
+                ),
+                content: const Text(
+                  'Currently no delivery slots are available for today. Please wait and try again later.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+            return;
+          }
+
           if (!vendor.isOpen) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(

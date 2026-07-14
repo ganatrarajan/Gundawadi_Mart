@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/network/dio_client.dart';
 import '../../core/services/storage_service.dart';
@@ -13,11 +14,17 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserModel> login(String mobile, String password) async {
+    String? deviceToken;
+    try {
+      deviceToken = await FirebaseMessaging.instance.getToken();
+    } catch (_) {}
+
     final response = await _dioClient.post(
       ApiEndpoints.login,
       data: {
         'mobile': mobile,
         'password': password,
+        if (deviceToken != null) 'device_token': deviceToken,
       },
     );
 
@@ -121,5 +128,13 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> logout() async {
     await _storageService.clearAll();
+  }
+
+  @override
+  Future<void> updateDeviceToken(String token) async {
+    await _dioClient.post(
+      ApiEndpoints.updateDeviceToken,
+      data: {'device_token': token},
+    );
   }
 }

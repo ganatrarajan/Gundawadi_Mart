@@ -16,6 +16,7 @@ class ApiEndpoints {
   static const String vendors = '/customer/vendors';
   static const String orders = '/customer/orders';
   static const String addresses = '/customer/addresses';
+  static const String updateDeviceToken = '/customer/update-device-token';
   
   static String vendorDetails(int id) => '/customer/vendors/$id';
   static String orderDetails(int id) => '/customer/orders/$id';

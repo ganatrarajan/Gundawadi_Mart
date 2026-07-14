@@ -116,6 +116,7 @@ class _HomeTabState extends State<_HomeTab> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<VendorProvider>(context, listen: false).fetchVendors(isRefresh: true);
       Provider.of<OrderProvider>(context, listen: false).fetchOrders();
+      Provider.of<AuthProvider>(context, listen: false).refreshProfile();
     });
 
     _scrollController.addListener(_scrollListener);
@@ -156,6 +157,7 @@ class _HomeTabState extends State<_HomeTab> {
       search: _searchController.text.trim(),
       isRefresh: true,
     );
+    await Provider.of<AuthProvider>(context, listen: false).refreshProfile();
   }
 
   @override
@@ -257,6 +259,30 @@ class _HomeTabState extends State<_HomeTab> {
               ),
             ),
           ),
+
+          // Sticky Warning Banner when no slots are available
+          if (authProvider.currentUser != null && authProvider.currentUser!.deliveryTimeSlots.isEmpty)
+            Container(
+              width: double.infinity,
+              color: Colors.amber.shade100,
+              padding: const EdgeInsets.symmetric(horizontal: Dimensions.md, vertical: 10),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900, size: 20),
+                  const SizedBox(width: Dimensions.sm),
+                  Expanded(
+                    child: Text(
+                      'Currently no delivery slots are available for today. Please check back later.',
+                      style: TextStyle(
+                        color: Colors.amber.shade900,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           // Vendor List
           Expanded(

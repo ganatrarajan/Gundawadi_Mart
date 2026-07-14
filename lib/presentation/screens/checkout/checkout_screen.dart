@@ -47,15 +47,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  List<String> _getAvailableSlots(List<String> slots) {
-    final allSlots = slots.isNotEmpty
-        ? slots
-        : const ['09:00 AM - 12:00 PM', '12:00 PM - 03:00 PM', '03:00 PM - 06:00 PM', '06:00 PM - 09:00 PM'];
+  List<String> _getAvailableSlots(List<String> slots, bool allowToday) {
+    final List<String> available = [];
     
-    final available = allSlots.where((slot) => !_hasSlotPassedToday(slot)).toList();
-    if (available.isEmpty) {
-      return const ['Next Day Delivery (Tomorrow)'];
+    // 1. Add active slots that haven't passed yet for Today
+    if (allowToday) {
+      for (final slot in slots) {
+        if (!_hasSlotPassedToday(slot)) {
+          available.add('Today: $slot');
+        }
+      }
     }
+    
+    // 2. Add all active slots for Tomorrow
+    for (final slot in slots) {
+      available.add('Tomorrow: $slot');
+    }
+    
     return available;
   }
 
@@ -63,13 +71,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
-      if (user != null) {
-        final available = _getAvailableSlots(user.deliveryTimeSlots);
-        setState(() {
-          _selectedDeliverySlot = available.first;
-        });
-      }
+      Provider.of<AuthProvider>(context, listen: false).refreshProfile();
     });
   }
 
@@ -87,8 +89,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
+    if (_selectedDeliverySlot == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a delivery time slot.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     final success = await orderProvider.placeOrder(
-      vendorId: cart.activeVendorId!,
+      vendorId: cart.activeVendorId ?? 0,
       cartItems: cart.items,
       totalAmount: cart.subtotal + deliveryCharge + handlingCharge + platformFee,
       deliveryCharge: deliveryCharge,
@@ -130,6 +142,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final orderProvider = Provider.of<OrderProvider>(context);
     final auth = Provider.of<AuthProvider>(context);
     final user = auth.currentUser;
+
+    if (user != null) {
+      final availableSlots = _getAvailableSlots(user.deliveryTimeSlots, user.allowTodayDelivery);
+      if (_selectedDeliverySlot != null && !availableSlots.contains(_selectedDeliverySlot)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              _selectedDeliverySlot = null;
+            });
+          }
+        });
+      }
+    }
 
     final isApproved = user?.status == 'approved';
     final hasDistance = user?.deliveryKm != null && user?.deliveryCharge != null;
@@ -272,9 +297,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<String>(
                                 value: _selectedDeliverySlot,
+                                hint: const Row(
+                                  children: [
+                                    Icon(Icons.access_time_filled_rounded, color: AppColors.textSecondary, size: 20),
+                                    SizedBox(width: Dimensions.md),
+                                    Text(
+                                      'Select Delivery Slot',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 isExpanded: true,
                                 icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
-                                items: _getAvailableSlots(user.deliveryTimeSlots)
+                                items: _getAvailableSlots(user.deliveryTimeSlots, user.allowTodayDelivery)
                                     .map((String slot) {
                                   return DropdownMenuItem<String>(
                                     value: slot,

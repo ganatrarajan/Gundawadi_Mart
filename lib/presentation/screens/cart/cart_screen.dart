@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/dimensions.dart';
+import '../../../data/models/cart_model.dart';
 import '../../providers/cart_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/empty_state_widget.dart';
@@ -39,6 +40,11 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
 
+    final groupedItems = <String, List<CartItem>>{};
+    for (var item in cart.items) {
+      groupedItems.putIfAbsent(item.vendorName, () => []).add(item);
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -68,145 +74,139 @@ class _CartScreenState extends State<CartScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Active Vendor Banner
-                        Container(
-                          padding: const EdgeInsets.all(Dimensions.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryLight,
-                            borderRadius: BorderRadius.circular(Dimensions.radiusMd),
-                          ),
-                          child: Row(
+                        // Grouped Products list
+                        ...groupedItems.entries.map((MapEntry<String, List<CartItem>> entry) {
+                          final vendorName = entry.key;
+                          final vendorItems = entry.value;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.storefront_rounded, color: AppColors.primary),
-                              const SizedBox(width: Dimensions.md),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              // Vendor Header Banner
+                              Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(bottom: Dimensions.sm),
+                                padding: const EdgeInsets.symmetric(horizontal: Dimensions.md, vertical: Dimensions.sm),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryLight,
+                                  borderRadius: BorderRadius.circular(Dimensions.radiusSm),
+                                ),
+                                child: Row(
                                   children: [
-                                    const Text(
-                                      'Ordering From',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                    Text(
-                                      cart.activeVendorName ?? '',
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textPrimary,
+                                    const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 20),
+                                    const SizedBox(width: Dimensions.sm),
+                                    Expanded(
+                                      child: Text(
+                                        vendorName,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: Dimensions.md),
-
-                        // Products list
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: cart.items.length,
-                          itemBuilder: (ctx, index) {
-                            final item = cart.items[index];
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: Dimensions.sm),
-                              child: Padding(
-                                padding: const EdgeInsets.all(Dimensions.md),
-                                child: Row(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(Dimensions.radiusSm),
-                                      child: Image.network(
-                                        item.product.imageUrl,
-                                        height: 50,
-                                        width: 50,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Container(
+                              
+                              // List of items for this vendor
+                              ...vendorItems.map((CartItem item) {
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: Dimensions.sm),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(Dimensions.md),
+                                    child: Row(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(Dimensions.radiusSm),
+                                          child: Image.network(
+                                            item.product.imageUrl,
                                             height: 50,
                                             width: 50,
-                                            color: AppColors.primaryLight,
-                                            child: const Icon(Icons.eco_rounded, color: AppColors.primary, size: 20),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: Dimensions.md),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            item.product.name,
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.textPrimary,
-                                            ),
-                                          ),
-                                          Text(
-                                            'Option: ${item.optionLabel}',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: AppColors.textSecondary,
-                                            ),
-                                          ),
-                                          const SizedBox(height: Dimensions.xs),
-                                          Text(
-                                            '₹${item.totalPrice.toStringAsFixed(0)}',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.primary,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    
-                                    // Qty Modifier
-                                    Row(
-                                      children: [
-                                        _QtyAction(
-                                          icon: Icons.remove_rounded,
-                                          onTap: () => cart.updateQuantity(
-                                            item.product.id,
-                                            item.optionLabel,
-                                            -1,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Container(
+                                                height: 50,
+                                                width: 50,
+                                                color: AppColors.primaryLight,
+                                                child: const Icon(Icons.eco_rounded, color: AppColors.primary, size: 20),
+                                              );
+                                            },
                                           ),
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: Dimensions.md),
-                                          child: Text(
-                                            item.quantity.toString(),
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                        const SizedBox(width: Dimensions.md),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                item.product.name,
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                              ),
+                                              Text(
+                                                'Option: ${item.optionLabel}',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: AppColors.textSecondary,
+                                                ),
+                                              ),
+                                              const SizedBox(height: Dimensions.xs),
+                                              Text(
+                                                '₹${item.totalPrice.toStringAsFixed(0)}',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.primary,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                        _QtyAction(
-                                          icon: Icons.add_rounded,
-                                          onTap: () => cart.updateQuantity(
-                                            item.product.id,
-                                            item.optionLabel,
-                                            1,
-                                          ),
+                                        
+                                        // Qty Modifier
+                                        Row(
+                                          children: [
+                                            _QtyAction(
+                                              icon: Icons.remove_rounded,
+                                              onTap: () => cart.updateQuantity(
+                                                item.product.id,
+                                                item.optionLabel,
+                                                -1,
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(horizontal: Dimensions.md),
+                                              child: Text(
+                                                item.quantity.toString(),
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                            _QtyAction(
+                                              icon: Icons.add_rounded,
+                                              onTap: () => cart.updateQuantity(
+                                                item.product.id,
+                                                item.optionLabel,
+                                                1,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: Dimensions.md),
+                                  ),
+                                );
+                              }).toList(),
+                              const SizedBox(height: Dimensions.md),
+                            ],
+                          );
+                        }).toList(),
 
                         // Special Instructions
                         const Text(

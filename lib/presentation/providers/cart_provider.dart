@@ -4,13 +4,11 @@ import '../../data/models/product_model.dart';
 
 class CartProvider extends ChangeNotifier {
   final List<CartItem> _items = [];
-  int? _activeVendorId;
-  String? _activeVendorName;
   String _specialInstructions = '';
 
   List<CartItem> get items => _items;
-  int? get activeVendorId => _activeVendorId;
-  String? get activeVendorName => _activeVendorName;
+  int? get activeVendorId => _items.isEmpty ? null : _items.first.vendorId;
+  String? get activeVendorName => _items.isEmpty ? null : _items.first.vendorName;
   String get specialInstructions => _specialInstructions;
 
   int get totalItemCount {
@@ -29,9 +27,9 @@ class CartProvider extends ChangeNotifier {
 
   double get total => subtotal + deliveryCharge;
 
-  // Check if adding this product creates a vendor conflict
+  // Multi-vendor checkout allows items from any vendor
   bool hasVendorConflict(int vendorId) {
-    return _activeVendorId != null && _activeVendorId != vendorId;
+    return false;
   }
 
   // Add Item to Cart
@@ -43,14 +41,6 @@ class CartProvider extends ChangeNotifier {
     required String vendorName,
     int quantity = 1,
   }) {
-    // If different vendor, caller must resolve conflict first using clearCart
-    if (_activeVendorId == null) {
-      _activeVendorId = vendorId;
-      _activeVendorName = vendorName;
-    } else if (_activeVendorId != vendorId) {
-      return;
-    }
-
     final index = _items.indexWhere(
       (item) => item.product.id == product.id && item.optionLabel == optionLabel,
     );
@@ -63,6 +53,8 @@ class CartProvider extends ChangeNotifier {
           product: product,
           optionLabel: optionLabel,
           pricePerUnit: pricePerUnit,
+          vendorId: vendorId,
+          vendorName: vendorName,
           quantity: quantity,
         ),
       );
@@ -83,11 +75,6 @@ class CartProvider extends ChangeNotifier {
       } else {
         _items[index].quantity = newQty;
       }
-      
-      // If cart empty, reset active vendor details
-      if (_items.isEmpty) {
-        resetActiveVendor();
-      }
       notifyListeners();
     }
   }
@@ -97,9 +84,6 @@ class CartProvider extends ChangeNotifier {
     _items.removeWhere(
       (item) => item.product.id == productId && item.optionLabel == optionLabel,
     );
-    if (_items.isEmpty) {
-      resetActiveVendor();
-    }
     notifyListeners();
   }
 
@@ -111,8 +95,6 @@ class CartProvider extends ChangeNotifier {
 
   // Reset active vendor
   void resetActiveVendor() {
-    _activeVendorId = null;
-    _activeVendorName = null;
     _specialInstructions = '';
   }
 

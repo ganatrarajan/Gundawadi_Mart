@@ -364,76 +364,31 @@ class _ProductCardState extends State<ProductCard> {
                 text: 'Add to Cart',
                 icon: Icons.shopping_bag_outlined,
                 onPressed: () {
-                  if (cart.hasVendorConflict(widget.vendorId)) {
-                    _showConflictDialog(context, cart);
-                  } else {
-                    cart.addToCart(
-                      product: widget.product,
-                      optionLabel: _selectedOption,
-                      pricePerUnit: _priceForOption,
-                      vendorId: widget.vendorId,
-                      vendorName: widget.vendorName,
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${widget.product.name} Added!'),
-                        duration: const Duration(seconds: 1),
-                        action: SnackBarAction(
-                          label: 'View Cart',
-                          textColor: Colors.white,
-                          onPressed: () {
-                            // Can pop to home or push cart screen
-                          },
-                        ),
+                  cart.addToCart(
+                    product: widget.product,
+                    optionLabel: _selectedOption,
+                    pricePerUnit: _priceForOption,
+                    vendorId: widget.vendorId,
+                    vendorName: widget.vendorName,
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${widget.product.name} Added!'),
+                      duration: const Duration(seconds: 1),
+                      action: SnackBarAction(
+                        label: 'View Cart',
+                        textColor: Colors.white,
+                        onPressed: () {
+                          // Can pop to home or push cart screen
+                        },
                       ),
-                    );
-                  }
+                    ),
+                  );
                 },
               ),
           ],
         ),
       ),
-    );
-  }
-
-  void _showConflictDialog(BuildContext context, CartProvider cart) {
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Conflict in Cart'),
-          content: Text(
-            'Your cart contains items from "${cart.activeVendorName}". '
-            'Would you like to discard those items and start a new order with "${widget.vendorName}"?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                cart.clearCart();
-                cart.addToCart(
-                  product: widget.product,
-                  optionLabel: _selectedOption,
-                  pricePerUnit: _priceForOption,
-                  vendorId: widget.vendorId,
-                  vendorName: widget.vendorName,
-                );
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Cart reset. Added ${widget.product.name}!'),
-                    duration: const Duration(seconds: 1),
-                  ),
-                );
-              },
-              child: const Text('Discard & Add'),
-            ),
-          ],
-        );
-      },
     );
   }
 

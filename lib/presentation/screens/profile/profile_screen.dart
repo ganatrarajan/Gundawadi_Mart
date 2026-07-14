@@ -288,6 +288,58 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: Dimensions.md),
+
+            // Support Contact Card
+            Card(
+              color: Colors.white,
+              elevation: 0.5,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: AppColors.primary.withOpacity(0.2), width: 1),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(Dimensions.md),
+                child: Row(
+                  children: [
+                    const Icon(Icons.support_agent_rounded, size: 40, color: AppColors.primary),
+                    const SizedBox(width: Dimensions.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?.supportName ?? 'Gundawadi Mart Support',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Call: +91 ${user?.supportMobile ?? '9876543210'}',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'For any app-related issue or concession call anytime.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: Dimensions.xl),
 
             // Logout Action Button

@@ -12,6 +12,9 @@ class UserModel {
   final double platformFee;
   final bool showHandlingCharge;
   final bool showPlatformFee;
+  final bool allowTodayDelivery;
+  final String supportName;
+  final String supportMobile;
   final List<String> deliveryTimeSlots;
   final String? profilePhoto;
   final AddressModel? address;
@@ -29,6 +32,9 @@ class UserModel {
     this.platformFee = 10.0,
     this.showHandlingCharge = true,
     this.showPlatformFee = true,
+    this.allowTodayDelivery = true,
+    this.supportName = 'Gundawadi Mart Support',
+    this.supportMobile = '9876543210',
     this.deliveryTimeSlots = const [],
     this.profilePhoto,
     this.address,
@@ -83,6 +89,9 @@ class UserModel {
       platformFee: parseDouble(json['platform_fee'] ?? json['platform_charge']) ?? 10.0,
       showHandlingCharge: parseBool(json['show_handling_charge'] ?? json['handling_charge_enabled'] ?? json['show_handling'], true),
       showPlatformFee: parseBool(json['show_platform_fee'] ?? json['platform_fee_enabled'] ?? json['show_platform'], true),
+      allowTodayDelivery: parseBool(json['allow_today_delivery'] ?? json['allow_today'], true),
+      supportName: json['support_name']?.toString() ?? 'Gundawadi Mart Support',
+      supportMobile: json['support_mobile']?.toString() ?? '9876543210',
       deliveryTimeSlots: parseSlots(json['delivery_time_slots']),
       profilePhoto: ApiEndpoints.formatImageUrl(json['profile_photo']?.toString()),
       address: json['address'] != null 
@@ -107,6 +116,9 @@ class UserModel {
       'platform_fee': platformFee,
       'show_handling_charge': showHandlingCharge,
       'show_platform_fee': showPlatformFee,
+      'allow_today_delivery': allowTodayDelivery,
+      'support_name': supportName,
+      'support_mobile': supportMobile,
       'delivery_time_slots': deliveryTimeSlots,
       'profile_photo': profilePhoto,
       'address': address?.toJson(),
@@ -125,6 +137,9 @@ class UserModel {
     double? platformFee,
     bool? showHandlingCharge,
     bool? showPlatformFee,
+    bool? allowTodayDelivery,
+    String? supportName,
+    String? supportMobile,
     List<String>? deliveryTimeSlots,
     String? profilePhoto,
     AddressModel? address,
@@ -142,6 +157,9 @@ class UserModel {
       platformFee: platformFee ?? this.platformFee,
       showHandlingCharge: showHandlingCharge ?? this.showHandlingCharge,
       showPlatformFee: showPlatformFee ?? this.showPlatformFee,
+      allowTodayDelivery: allowTodayDelivery ?? this.allowTodayDelivery,
+      supportName: supportName ?? this.supportName,
+      supportMobile: supportMobile ?? this.supportMobile,
       deliveryTimeSlots: deliveryTimeSlots ?? this.deliveryTimeSlots,
       profilePhoto: profilePhoto ?? this.profilePhoto,
       address: address ?? this.address,

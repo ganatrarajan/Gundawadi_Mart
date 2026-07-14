@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/services/storage_service.dart';
 import '../../data/models/user_model.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -35,6 +36,7 @@ class AuthProvider extends ChangeNotifier {
     if (token != null && userJson != null) {
       _currentUser = UserModel.fromJson(userJson);
       _state = AuthState.authenticated;
+      _syncFcmToken();
     } else {
       _state = AuthState.unauthenticated;
     }
@@ -54,6 +56,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       _currentUser = await _authRepository.login(mobile, password);
       _state = AuthState.authenticated;
+      _syncFcmToken();
       notifyListeners();
       return true;
     } catch (e) {
@@ -174,5 +177,14 @@ class AuthProvider extends ChangeNotifier {
     _currentUser = null;
     _state = AuthState.unauthenticated;
     notifyListeners();
+  }
+
+  Future<void> _syncFcmToken() async {
+    try {
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null) {
+        await _authRepository.updateDeviceToken(fcmToken);
+      }
+    } catch (_) {}
   }
 }
