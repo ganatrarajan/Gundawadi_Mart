@@ -91,6 +91,22 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Upload profile photo
+  Future<bool> uploadProfilePhoto(String filePath) async {
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _currentUser = await _authRepository.uploadProfilePhoto(filePath);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Register customer
   Future<bool> register({
     required String name,

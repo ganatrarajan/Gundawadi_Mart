@@ -73,20 +73,15 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                             background: Stack(
                               fit: StackFit.expand,
                               children: [
-                                Image.network(
-                                  vendor.shopPhoto,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: AppColors.primaryLight,
-                                      child: const Icon(
-                                        Icons.store_rounded,
-                                        size: 64,
-                                        color: AppColors.primary,
-                                      ),
-                                    );
-                                  },
-                                ),
+                                vendor.shopPhoto.isNotEmpty && vendor.shopPhoto.startsWith('http')
+                                    ? Image.network(
+                                        vendor.shopPhoto,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return _buildFallbackBanner(vendor);
+                                        },
+                                      )
+                                    : _buildFallbackBanner(vendor),
                                 DecoratedBox(
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
@@ -264,6 +259,48 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
           );
         },
         childCount: grouped.keys.length,
+      ),
+    );
+  }
+
+  Widget _buildFallbackBanner(VendorModel vendor) {
+    String initials = 'M';
+    if (vendor.shopName.isNotEmpty) {
+      final parts = vendor.shopName.trim().split(' ');
+      if (parts.length > 1) {
+        initials = (parts[0][0] + parts[1][0]).toUpperCase();
+      } else {
+        initials = vendor.shopName[0].toUpperCase();
+      }
+    }
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary.withOpacity(0.85),
+            AppColors.primary.withOpacity(0.6),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 48.0), // push the avatar up to avoid title overlap
+          child: CircleAvatar(
+            radius: 40,
+            backgroundColor: Colors.white,
+            child: Text(
+              initials,
+              style: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.w900,
+                color: AppColors.primary,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

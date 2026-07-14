@@ -45,30 +45,10 @@ class VendorCard extends StatelessWidget {
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: Dimensions.vendorImageHeight,
-                            width: double.infinity,
-                            color: AppColors.primaryLight,
-                            alignment: Alignment.center,
-                            child: const Icon(
-                              Icons.store_rounded,
-                              size: 64,
-                              color: AppColors.primary,
-                            ),
-                          );
+                          return _buildFallbackBanner();
                         },
                       )
-                    : Container(
-                        height: Dimensions.vendorImageHeight,
-                        width: double.infinity,
-                        color: AppColors.primaryLight,
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.store_rounded,
-                          size: 64,
-                          color: AppColors.primary,
-                        ),
-                      ),
+                    : _buildFallbackBanner(),
                 Positioned(
                   top: Dimensions.md,
                   right: Dimensions.md,
@@ -163,6 +143,48 @@ class VendorCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return 'M';
+    final parts = name.trim().split(' ');
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name[0].toUpperCase();
+  }
+
+  Widget _buildFallbackBanner() {
+    final initials = _getInitials(vendor.shopName);
+    return Container(
+      height: Dimensions.vendorImageHeight,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary.withOpacity(0.85),
+            AppColors.primary.withOpacity(0.6),
+          ],
+        ),
+      ),
+      child: Center(
+        child: CircleAvatar(
+          radius: 42,
+          backgroundColor: Colors.white,
+          child: Text(
+            initials,
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              color: AppColors.primary,
+              letterSpacing: 1.0,
+            ),
+          ),
         ),
       ),
     );

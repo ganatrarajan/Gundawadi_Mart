@@ -39,7 +39,7 @@ class OrderProvider extends ChangeNotifier {
   }
 
   List<OrderModel> get completedOrders {
-    return _orders.where((o) => o.status.toLowerCase() == 'delivered').toList();
+    return _orders.where((o) => o.status.toLowerCase() == 'delivered' || o.status.toLowerCase() == 'completed').toList();
   }
 
   List<OrderModel> get cancelledOrders {

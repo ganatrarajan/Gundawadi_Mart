@@ -12,6 +12,7 @@ class ApiEndpoints {
   static const String verifyOtp = '/customer/verify-otp';
   static const String profile = '/customer/profile';
   static const String updateProfile = '/customer/update-profile';
+  static const String uploadPhoto = '/customer/profile/upload-photo';
   static const String vendors = '/customer/vendors';
   static const String orders = '/customer/orders';
   static const String addresses = '/customer/addresses';

@@ -183,22 +183,10 @@ class _ProductCardState extends State<ProductCard> {
                           width: Dimensions.productImageSize,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              height: Dimensions.productImageSize,
-                              width: Dimensions.productImageSize,
-                              color: AppColors.primaryLight,
-                              alignment: Alignment.center,
-                              child: const Icon(Icons.eco_rounded, color: AppColors.primary),
-                            );
+                            return _buildProductFallback();
                           },
                         )
-                      : Container(
-                          height: Dimensions.productImageSize,
-                          width: Dimensions.productImageSize,
-                          color: AppColors.primaryLight,
-                          alignment: Alignment.center,
-                          child: const Icon(Icons.eco_rounded, color: AppColors.primary),
-                        ),
+                      : _buildProductFallback(),
                 ),
                 const SizedBox(width: Dimensions.md),
                 Expanded(
@@ -446,6 +434,41 @@ class _ProductCardState extends State<ProductCard> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildProductFallback() {
+    final firstLetter = widget.product.name.isNotEmpty 
+        ? widget.product.name[0].toUpperCase() 
+        : 'V';
+    return Container(
+      height: Dimensions.productImageSize,
+      width: Dimensions.productImageSize,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary.withOpacity(0.15),
+            AppColors.primary.withOpacity(0.05),
+          ],
+        ),
+        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(Dimensions.radiusMd),
+      ),
+      alignment: Alignment.center,
+      child: CircleAvatar(
+        radius: 20,
+        backgroundColor: AppColors.primary.withOpacity(0.2),
+        child: Text(
+          firstLetter,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+          ),
+        ),
+      ),
     );
   }
 }

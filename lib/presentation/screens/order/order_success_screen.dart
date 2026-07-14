@@ -133,7 +133,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> with SingleTick
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const HomeScreen(),
+                      builder: (_) => const HomeScreen(initialIndex: 2),
                     ),
                     (route) => false,
                   );
@@ -144,11 +144,11 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> with SingleTick
                 text: 'Continue Shopping',
                 isOutlined: true,
                 onPressed: () {
-                  // Direct to main homepage stack
+                  // Direct to main homepage stack (Index 0)
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const HomeScreen(),
+                      builder: (_) => const HomeScreen(initialIndex: 0),
                     ),
                     (route) => false,
                   );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/dimensions.dart';
 import '../../../data/models/user_model.dart';
@@ -53,6 +54,32 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _pickAndUploadPhoto(BuildContext context, AuthProvider auth) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    
+    if (pickedFile != null) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Uploading photo...'), duration: Duration(seconds: 2)),
+      );
+
+      final success = await auth.uploadProfilePhoto(pickedFile.path);
+
+      if (context.mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile photo updated successfully.')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(auth.errorMessage ?? 'Failed to upload photo.')),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -77,40 +104,43 @@ class ProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(Dimensions.lg),
                 child: Row(
                   children: [
-                    Stack(
-                      alignment: Alignment.bottomRight,
-                      children: [
-                        Container(
-                          height: 64,
-                          width: 64,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: user?.profilePhoto != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(32),
-                                  child: Image.network(
-                                    user!.profilePhoto!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const Icon(Icons.person_rounded, size: 36, color: Colors.white),
+                    GestureDetector(
+                      onTap: () => _pickAndUploadPhoto(context, authProvider),
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Container(
+                            height: 64,
+                            width: 64,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: user?.profilePhoto != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(32),
+                                    child: Image.network(
+                                      user!.profilePhoto!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => const Icon(Icons.person_rounded, size: 36, color: Colors.white),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.person_rounded,
+                                    size: 36,
+                                    color: Colors.white,
                                   ),
-                                )
-                              : const Icon(
-                                  Icons.person_rounded,
-                                  size: 36,
-                                  color: Colors.white,
-                                ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: Colors.orange,
-                            shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.camera_alt, size: 12, color: Colors.white),
-                        ),
-                      ],
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.orange,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.camera_alt, size: 12, color: Colors.white),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(width: Dimensions.md),
                     Expanded(

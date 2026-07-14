@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/network/dio_client.dart';
 import '../../core/services/storage_service.dart';
@@ -100,6 +101,21 @@ class AuthRepositoryImpl implements AuthRepository {
       },
     );
     return response.data['message'] ?? 'Registration submitted successfully.';
+  }
+
+  @override
+  Future<UserModel> uploadProfilePhoto(String filePath) async {
+    final fileName = filePath.split('/').last;
+    final formData = FormData.fromMap({
+      'photo': await MultipartFile.fromFile(filePath, filename: fileName),
+    });
+
+    await _dioClient.post(
+      ApiEndpoints.uploadPhoto,
+      data: formData,
+    );
+
+    return await getProfile();
   }
 
   @override

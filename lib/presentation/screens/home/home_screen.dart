@@ -17,14 +17,16 @@ import '../order/order_details_screen.dart';
 import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialIndex;
+
+  const HomeScreen({super.key, this.initialIndex = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
   // List of screens to display in bottom navigation tabs
   late final List<Widget> _screens;
@@ -32,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialIndex;
     _screens = [
       const _HomeTab(),
       const CartScreen(isTab: true),
@@ -165,29 +168,58 @@ class _HomeTabState extends State<_HomeTab> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        toolbarHeight: 90,
+        toolbarHeight: 95,
         backgroundColor: AppColors.surface,
         elevation: 0,
         title: Padding(
           padding: const EdgeInsets.only(top: Dimensions.sm),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text(
-                'Hello, $name 👋',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+              Container(
+                height: 48,
+                width: 48,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
                 ),
+                child: authProvider.currentUser?.profilePhoto != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Image.network(
+                          authProvider.currentUser!.profilePhoto!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.person_rounded, size: 28, color: Colors.white),
+                        ),
+                      )
+                    : const Icon(
+                        Icons.person_rounded,
+                        size: 28,
+                        color: Colors.white,
+                      ),
               ),
-              const SizedBox(height: Dimensions.xs),
-              const Text(
-                'Find fresh organic vegetables near you',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hello, $name 👋',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: Dimensions.xs),
+                    const Text(
+                      'Find fresh organic vegetables near you',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

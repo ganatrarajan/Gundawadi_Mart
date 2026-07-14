@@ -4,6 +4,7 @@ abstract class AuthRepository {
   Future<UserModel> login(String mobile, String password);
   Future<UserModel> getProfile();
   Future<UserModel> updateProfile(String name, String mobile, AddressModel address);
+  Future<UserModel> uploadProfilePhoto(String filePath);
   Future<AddressModel> submitAddressChangeRequest(AddressModel address);
   Future<String> register({
     required String name,
