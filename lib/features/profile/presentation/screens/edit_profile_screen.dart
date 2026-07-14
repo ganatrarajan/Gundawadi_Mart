@@ -155,6 +155,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       openingTime: _openingTime,
       closingTime: _closingTime,
       shopPhoto: _shopPhotoUrl,
+      supportName: authProvider.user?.supportName ?? 'Gundawadi Mart Support',
+      supportMobile: authProvider.user?.supportMobile ?? '9876543210',
     );
 
     final success = await provider.saveProfile(updatedUser);

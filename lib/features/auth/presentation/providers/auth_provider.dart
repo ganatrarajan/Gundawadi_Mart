@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/services/shared_prefs_service.dart';
+import '../../../../core/services/fcm_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepository;
@@ -34,6 +35,7 @@ class AuthProvider extends ChangeNotifier {
       final remember = SharedPrefsService.getRememberLogin();
       if (remember) {
         _user = await _authRepository.getLoggedInUser();
+        _syncFcmToken();
       } else {
         await _authRepository.logout();
       }
@@ -54,6 +56,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       _user = await _authRepository.login(mobile, password);
       await SharedPrefsService.saveRememberLogin(rememberMe);
+      _syncFcmToken();
       _isLoading = false;
       notifyListeners();
       return true;
@@ -78,5 +81,14 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _syncFcmToken() async {
+    try {
+      final token = await FcmService.getFcmToken();
+      if (token != null) {
+        await _authRepository.updateFcmToken(token);
+      }
+    } catch (_) {}
   }
 }

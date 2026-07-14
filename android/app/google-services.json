@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "214016845109",
+    "project_id": "gundawadi-mart",
+    "storage_bucket": "gundawadi-mart.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:214016845109:android:c1fa1abc0dae3151f4187c",
+        "android_client_info": {
+          "package_name": "com.customerapp.android.customer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAM8xI-M5x7-pAuGTQXuNMmV9hiQAirIuk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:214016845109:android:50e53ee49b7ef127f4187c",
+        "android_client_info": {
+          "package_name": "com.vendorapp.android.mart"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAM8xI-M5x7-pAuGTQXuNMmV9hiQAirIuk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

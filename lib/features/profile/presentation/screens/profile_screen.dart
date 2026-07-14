@@ -113,6 +113,59 @@ class ProfileScreen extends StatelessWidget {
                                 label: 'SHOP OPERATING HOURS',
                                 value: '${profile.openingTime} to ${profile.closingTime}',
                               ),
+                              const Divider(height: 20),
+                              
+                              // Support Contact Card for Vendors
+                              Card(
+                                color: Colors.white,
+                                elevation: 0.5,
+                                margin: EdgeInsets.zero,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(color: AppColors.primary.withOpacity(0.2), width: 1),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.support_agent_rounded, size: 40, color: AppColors.primary),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              profile.supportName,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.textPrimary,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Call: +91 ${profile.supportMobile}',
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primary,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            const Text(
+                                              'For any app-related issue or questions call anytime.',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                               const SizedBox(height: 24),
                             ],
                           ),

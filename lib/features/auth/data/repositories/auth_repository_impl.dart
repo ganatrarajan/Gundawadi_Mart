@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/services/shared_prefs_service.dart';
+import '../../../../core/services/fcm_service.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/errors/failures.dart';
@@ -13,12 +14,18 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<User> login(String mobile, String password) async {
+    String? deviceToken;
+    try {
+      deviceToken = await FcmService.getFcmToken();
+    } catch (_) {}
+
     try {
       final response = await _dioClient.dio.post(
         ApiEndpoints.login,
         data: {
           'mobile': mobile,
           'password': password,
+          if (deviceToken != null) 'device_token': deviceToken,
         },
       );
 
@@ -69,8 +76,22 @@ class AuthRepositoryImpl implements AuthRepository {
         openingTime: details['openingTime'] ?? '06:00 AM',
         closingTime: details['closingTime'] ?? '08:00 PM',
         shopPhoto: details['shopPhoto'],
+        supportName: details['supportName'] ?? 'Gundawadi Mart Support',
+        supportMobile: details['supportMobile'] ?? '9876543210',
       );
     }
     return null;
+  }
+
+  @override
+  Future<void> updateFcmToken(String token) async {
+    try {
+      await _dioClient.dio.post(
+        ApiEndpoints.updateFcmToken,
+        data: {'device_token': token},
+      );
+    } catch (_) {
+      // Gracefully capture
+    }
   }
 }

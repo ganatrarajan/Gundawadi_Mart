@@ -6,6 +6,8 @@ class User {
   final String openingTime;
   final String closingTime;
   final String? shopPhoto;
+  final String supportName;
+  final String supportMobile;
 
   User({
     required this.shopName,
@@ -15,6 +17,8 @@ class User {
     required this.openingTime,
     required this.closingTime,
     this.shopPhoto,
+    required this.supportName,
+    required this.supportMobile,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@ class User {
       openingTime: json['opening_time'] ?? '06:00 AM',
       closingTime: json['closing_time'] ?? '08:00 PM',
       shopPhoto: json['shop_photo'] ?? json['photo'],
+      supportName: json['support_name']?.toString() ?? 'Gundawadi Mart Support',
+      supportMobile: json['support_mobile']?.toString() ?? '9876543210',
     );
   }
 
@@ -38,6 +44,8 @@ class User {
       'opening_time': openingTime,
       'closing_time': closingTime,
       'shop_photo': shopPhoto,
+      'support_name': supportName,
+      'support_mobile': supportMobile,
     };
   }
 }
