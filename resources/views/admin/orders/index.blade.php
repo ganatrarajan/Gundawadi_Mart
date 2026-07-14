@@ -22,6 +22,7 @@
                         <option value="ready_for_pickup" {{ $status == 'ready_for_pickup' ? 'selected' : '' }}>Ready For Pickup</option>
                         <option value="out_for_delivery" {{ $status == 'out_for_delivery' ? 'selected' : '' }}>Out For Delivery</option>
                         <option value="delivered" {{ $status == 'delivered' ? 'selected' : '' }}>Delivered</option>
+                        <option value="completed" {{ $status == 'completed' ? 'selected' : '' }}>Completed</option>
                         <option value="cancelled" {{ $status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                     </select>
                 </div>

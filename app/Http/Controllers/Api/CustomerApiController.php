@@ -9,6 +9,7 @@ use App\Http\Resources\AddressResource;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\VendorResource;
+use App\Http\Resources\CustomerResource;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\Product;
@@ -46,9 +47,10 @@ class CustomerApiController extends Controller
         $this->customerRepository = $customerRepository;
     }
 
-    public function getVendors()
+    public function getVendors(Request $request)
     {
-        $vendors = $this->vendorRepository->allActive();
+        $search = $request->query('search');
+        $vendors = $this->vendorRepository->allActive($search);
         return $this->successResponse(VendorResource::collection($vendors), 'Vendors fetched.');
     }
 
@@ -188,15 +190,6 @@ class CustomerApiController extends Controller
             ]);
         }
 
-        // Send Notification to Vendor
-        FcmService::send(
-            'vendor',
-            $vendor->id,
-            $vendor->device_token,
-            'New Order Received',
-            "New order #{$order->id} from {$address->full_name} for Amount: ₹{$order->total}."
-        );
-
         // Send self notification to Customer
         FcmService::send(
             'customer',
@@ -313,15 +306,6 @@ class CustomerApiController extends Controller
 
         $newOrder = $this->orderRepository->create($orderData, $itemsData);
 
-        // Notify Vendor
-        FcmService::send(
-            'vendor',
-            $vendor->id,
-            $vendor->device_token,
-            'New Order Received (Reorder)',
-            "New reorder #{$newOrder->id} placed. Amount: ₹{$newOrder->total}."
-        );
-
         // Notify Customer
         FcmService::send(
             'customer',
@@ -354,6 +338,26 @@ class CustomerApiController extends Controller
         $customer = $this->customerRepository->update($customerId, $data);
 
         return $this->successResponse(new CustomerResource($customer), 'Profile updated successfully.');
+    }
+
+    public function uploadProfilePhoto(Request $request)
+    {
+        $customerId = $request->user()->id;
+        $request->validate([
+            'photo' => 'required|image|max:2048',
+        ]);
+
+        $customer = $request->user();
+        if ($customer->profile_photo) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($customer->profile_photo);
+        }
+
+        $path = $request->file('photo')->store('profiles', 'public');
+        $updatedCustomer = $this->customerRepository->update($customerId, ['profile_photo' => $path]);
+
+        return $this->successResponse([
+            'profile_photo' => asset('storage/' . $path)
+        ], 'Profile photo uploaded successfully.');
     }
 
     public function updateDeviceToken(Request $request)

@@ -12,7 +12,7 @@ class OrderItemResource extends JsonResource
         return [
             'id' => $this->id,
             'product_id' => $this->product_id,
-            'product_name' => $this->product_name,
+            'product_name' => $this->product_name ?? ($this->product ? $this->product->name : 'Unknown Product'),
             'price' => $this->price,
             'unit' => $this->unit,
             'quantity' => $this->quantity,

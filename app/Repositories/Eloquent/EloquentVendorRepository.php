@@ -7,9 +7,18 @@ use App\Repositories\Contracts\VendorRepositoryInterface;
 
 class EloquentVendorRepository implements VendorRepositoryInterface
 {
-    public function allActive()
+    public function allActive($search = null)
     {
-        return Vendor::where('status', 'active')->get();
+        $query = Vendor::where('status', 'active');
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('shop_name', 'like', "%{$search}%")
+                  ->orWhere('owner_name', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->get();
     }
 
     public function findById($id)

@@ -34,6 +34,7 @@ class AdminOrderController extends Controller
             'ready_for_pickup',
             'out_for_delivery',
             'delivered',
+            'completed',
             'cancelled'
         ];
 
@@ -45,7 +46,7 @@ class AdminOrderController extends Controller
         $order = Order::findOrFail($id);
 
         $request->validate([
-            'status' => 'required|in:pending,accepted,packing,ready_for_pickup,out_for_delivery,delivered,cancelled'
+            'status' => 'required|in:pending,accepted,packing,ready_for_pickup,out_for_delivery,delivered,completed,cancelled'
         ]);
 
         $status = $request->input('status');
@@ -60,6 +61,7 @@ class AdminOrderController extends Controller
             'ready_for_pickup' => 'ready for delivery pickup.',
             'out_for_delivery' => 'out for delivery! Our agent is bringing it to your home.',
             'delivered' => 'successfully delivered! Thank you for buying from Gundawadi Mart.',
+            'completed' => 'completed.',
             'cancelled' => 'cancelled.'
         ];
 
@@ -70,6 +72,17 @@ class AdminOrderController extends Controller
             "Order #{$order->id} Update",
             "Your order is " . ($statusTexts[$status] ?? $status)
         );
+
+        // Notify Vendor if accepted
+        if ($status === 'accepted') {
+            FcmService::send(
+                'vendor',
+                $order->vendor_id,
+                $order->vendor->device_token,
+                "New Order Assigned",
+                "Order #{$order->id} has been accepted by Admin and is ready for packing."
+            );
+        }
 
         // Notify Vendor if cancelled
         if ($status === 'cancelled') {

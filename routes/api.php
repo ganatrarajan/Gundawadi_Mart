@@ -36,6 +36,7 @@ Route::prefix('customer')->group(function () {
         Route::post('/update-profile', [CustomerApiController::class, 'updateProfile']);
         Route::post('/profile', [CustomerApiController::class, 'updateProfile']);
         Route::get('/profile', [CustomerApiController::class, 'getProfile']);
+        Route::post('/profile/upload-photo', [CustomerApiController::class, 'uploadProfilePhoto']);
         Route::post('/update-device-token', [CustomerApiController::class, 'updateDeviceToken']);
     });
 });

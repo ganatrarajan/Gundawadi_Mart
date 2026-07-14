@@ -49,10 +49,12 @@ class VendorApiController extends Controller
 
         $pendingOrders = Order::where('vendor_id', $vendorId)
             ->whereIn('status', ['accepted', 'packing'])
+            ->whereBetween('created_at', [$todayStart, $todayEnd])
             ->count();
 
         $completedOrders = Order::where('vendor_id', $vendorId)
             ->whereIn('status', ['ready_for_pickup', 'delivered', 'completed'])
+            ->whereBetween('created_at', [$todayStart, $todayEnd])
             ->count();
 
         $todaySales = Order::where('vendor_id', $vendorId)

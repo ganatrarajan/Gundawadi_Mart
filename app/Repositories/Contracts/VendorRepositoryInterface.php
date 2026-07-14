@@ -4,7 +4,7 @@ namespace App\Repositories\Contracts;
 
 interface VendorRepositoryInterface
 {
-    public function allActive();
+    public function allActive($search = null);
     public function findById($id);
     public function findByMobile($mobileNumber);
     public function create(array $data);

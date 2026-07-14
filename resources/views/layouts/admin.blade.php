@@ -99,6 +99,7 @@
         .badge-ready_for_pickup { background-color: #fd7e14; color: white; }
         .badge-out_for_delivery { background-color: #17a2b8; color: white; }
         .badge-delivered { background-color: #198754; color: white; }
+        .badge-completed { background-color: #198754; color: white; }
         .badge-cancelled { background-color: #dc3545; color: white; }
         .badge-active { background-color: #198754; color: white; }
         .badge-inactive { background-color: #6c757d; color: white; }
