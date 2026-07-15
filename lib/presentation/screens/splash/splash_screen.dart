@@ -69,20 +69,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(Dimensions.lg),
+                width: 120,
+                height: 120,
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.eco_rounded,
-                  size: 80,
-                  color: AppColors.primary,
+                clipBehavior: Clip.antiAlias,
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  fit: BoxFit.cover,
                 ),
               ),
               const SizedBox(height: Dimensions.lg),
               const Text(
-                'FreshMandi',
+                'Gmart',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 32,
@@ -92,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
               const SizedBox(height: Dimensions.sm),
               Text(
-                'Fresh Vegetables Delivered Daily',
+                'Your Premium Marketplace',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.8),
                   fontSize: 16,

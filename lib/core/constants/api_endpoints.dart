@@ -3,7 +3,7 @@ class ApiEndpoints {
   static const bool useMockApis = false;
 
   // Base configurations
-  static const String baseUrl = 'http://192.168.1.11:8000/api';
+  static const String baseUrl = 'http://192.168.1.10:8000/api';
   static const int receiveTimeout = 15000;
   static const int connectionTimeout = 15000;
 
@@ -27,14 +27,14 @@ class ApiEndpoints {
   static String formatImageUrl(String? url) {
     if (url == null || url.isEmpty || url == 'null') return '';
     
-    const String baseHost = 'http://192.168.1.11:8000';
+    const String baseHost = 'http://192.168.1.10:8000';
     String formatted = url;
     
     if (formatted.contains('localhost')) {
-      formatted = formatted.replaceAll('localhost', '192.168.1.11');
+      formatted = formatted.replaceAll('localhost', '192.168.1.10');
     }
     if (formatted.contains('127.0.0.1')) {
-      formatted = formatted.replaceAll('127.0.0.1', '192.168.1.11');
+      formatted = formatted.replaceAll('127.0.0.1', '192.168.1.10');
     }
     
     if (!formatted.startsWith('http://') && !formatted.startsWith('https://')) {

@@ -31,4 +31,26 @@ class CartItem {
       'vendor_name': vendorName,
     };
   }
+
+  Map<String, dynamic> toLocalJson() {
+    return {
+      'product': product.toJson(),
+      'option_label': optionLabel,
+      'price_per_unit': pricePerUnit,
+      'vendor_id': vendorId,
+      'vendor_name': vendorName,
+      'quantity': quantity,
+    };
+  }
+
+  factory CartItem.fromLocalJson(Map<String, dynamic> json) {
+    return CartItem(
+      product: ProductModel.fromJson(json['product'] as Map<String, dynamic>),
+      optionLabel: json['option_label']?.toString() ?? '',
+      pricePerUnit: (json['price_per_unit'] as num?)?.toDouble() ?? 0.0,
+      vendorId: (json['vendor_id'] as num?)?.toInt() ?? 0,
+      vendorName: json['vendor_name']?.toString() ?? '',
+      quantity: (json['quantity'] as num?)?.toInt() ?? 1,
+    );
+  }
 }

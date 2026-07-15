@@ -31,7 +31,7 @@ class OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final itemsDescription = order.items.map((i) => '${i.name} (${i.unit}) x${i.quantity}').join(', ');
+    final itemsDescription = order.items.map((i) => '${i.name} [${i.vendorName}] (${i.unit}) x${i.quantity}').join(', ');
 
     return Card(
       margin: const EdgeInsets.only(bottom: Dimensions.md),

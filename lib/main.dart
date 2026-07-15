@@ -46,18 +46,18 @@ void main() async {
           create: (_) => OrderProvider(orderRepository),
         ),
       ],
-      child: const FreshMandiApp(),
+      child: const GmartApp(),
     ),
   );
 }
 
-class FreshMandiApp extends StatelessWidget {
-  const FreshMandiApp({super.key});
+class GmartApp extends StatelessWidget {
+  const GmartApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FreshMandi',
+      title: 'Gmart',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       home: const SplashScreen(),

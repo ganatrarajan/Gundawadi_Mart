@@ -12,7 +12,7 @@ abstract class OrderRepository {
     double platformFee = 0.0,
     String deliverySlot = '',
   });
-  Future<List<OrderModel>> getOrders();
+  Future<List<OrderModel>> getOrders({String? date, String? month, String? year});
   Future<OrderModel> getOrderDetails(int id);
   Future<OrderModel> cancelOrder(int id);
 }

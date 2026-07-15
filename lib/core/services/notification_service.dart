@@ -30,6 +30,13 @@ class NotificationService {
 
       developer.log('User granted permission: ${settings.authorizationStatus}');
 
+      // Enable foreground notification banners (so user receives notification when app is open)
+      await messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
       // Fetch FCM Token (useful for server target messaging)
       final token = await messaging.getToken();
       developer.log("FCM Registration Token: $token");

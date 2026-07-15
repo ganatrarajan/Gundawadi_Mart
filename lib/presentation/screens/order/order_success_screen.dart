@@ -91,9 +91,9 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> with SingleTick
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: Dimensions.sm),
-              Text(
-                'Thank you for shopping with FreshMandi. Your order is pending vendor approval.',
-                style: const TextStyle(
+              const Text(
+                'Thank you for shopping with Gmart. Your order is pending vendor approval.',
+                style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
@@ -121,7 +121,34 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> with SingleTick
                   ),
                 ),
               ),
-              
+              const SizedBox(height: Dimensions.md),
+              // Highlight Note
+              Container(
+                padding: const EdgeInsets.all(Dimensions.md),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(Dimensions.radiusMd),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.orange.shade800, size: 20),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        "Note: This is not a fixed amount. The final amount may change according to the vendor. If it is reduced, it will reduce in your bill; if it is greater, it will be added. It depends on the vendor.",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                          height: 1.3,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const Spacer(),
 
               // Navigation triggers

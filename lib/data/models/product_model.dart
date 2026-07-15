@@ -34,13 +34,21 @@ class ProductModel {
       return 0.0;
     }
 
+    String parseCategory(dynamic cat) {
+      if (cat == null) return 'General';
+      if (cat is Map) {
+        return cat['name']?.toString() ?? 'General';
+      }
+      return cat.toString();
+    }
+
     return ProductModel(
       id: parseId(json['id']),
       name: json['name']?.toString() ?? '',
       imageUrl: ApiEndpoints.formatImageUrl(json['image_url'] ?? json['image']?.toString()),
       todayPrice: parseDouble(json['today_price'] ?? json['price']),
       unit: json['unit']?.toString() ?? 'kg',
-      category: json['category']?['name']?.toString() ?? json['category']?.toString() ?? 'General',
+      category: parseCategory(json['category']),
     );
   }
 

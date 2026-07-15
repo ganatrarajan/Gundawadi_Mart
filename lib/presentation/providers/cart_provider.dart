@@ -1,10 +1,36 @@
 import 'package:flutter/material.dart';
 import '../../data/models/cart_model.dart';
 import '../../data/models/product_model.dart';
+import '../../core/services/storage_service.dart';
 
 class CartProvider extends ChangeNotifier {
   final List<CartItem> _items = [];
   String _specialInstructions = '';
+
+  CartProvider() {
+    _loadCartFromStorage();
+  }
+
+  void _loadCartFromStorage() {
+    try {
+      final localItems = StorageService.instance.getCartItems();
+      _items.clear();
+      for (final itemJson in localItems) {
+        _items.add(CartItem.fromLocalJson(itemJson));
+      }
+    } catch (e) {
+      debugPrint("Error loading cart: $e");
+    }
+  }
+
+  void _saveCartToStorage() {
+    try {
+      final localItemsJson = _items.map((e) => e.toLocalJson()).toList();
+      StorageService.instance.saveCartItems(localItemsJson);
+    } catch (e) {
+      debugPrint("Error saving cart: $e");
+    }
+  }
 
   List<CartItem> get items => _items;
   int? get activeVendorId => _items.isEmpty ? null : _items.first.vendorId;
@@ -59,6 +85,7 @@ class CartProvider extends ChangeNotifier {
         ),
       );
     }
+    _saveCartToStorage();
     notifyListeners();
   }
 
@@ -75,6 +102,7 @@ class CartProvider extends ChangeNotifier {
       } else {
         _items[index].quantity = newQty;
       }
+      _saveCartToStorage();
       notifyListeners();
     }
   }
@@ -84,6 +112,7 @@ class CartProvider extends ChangeNotifier {
     _items.removeWhere(
       (item) => item.product.id == productId && item.optionLabel == optionLabel,
     );
+    _saveCartToStorage();
     notifyListeners();
   }
 
@@ -102,6 +131,7 @@ class CartProvider extends ChangeNotifier {
   void clearCart() {
     _items.clear();
     resetActiveVendor();
+    _saveCartToStorage();
     notifyListeners();
   }
 

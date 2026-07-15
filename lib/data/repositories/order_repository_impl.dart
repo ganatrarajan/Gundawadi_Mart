@@ -42,8 +42,15 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
-  Future<List<OrderModel>> getOrders() async {
-    final response = await _dioClient.get(ApiEndpoints.orders);
+  Future<List<OrderModel>> getOrders({String? date, String? month, String? year}) async {
+    final response = await _dioClient.get(
+      ApiEndpoints.orders,
+      queryParameters: {
+        if (date != null) 'date': date,
+        if (month != null) 'month': month,
+        if (year != null) 'year': year,
+      },
+    );
     final List<dynamic> list = response.data['data'] as List;
     return list.map((json) => OrderModel.fromJson(json as Map<String, dynamic>)).toList();
   }

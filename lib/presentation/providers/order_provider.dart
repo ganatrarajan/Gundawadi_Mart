@@ -92,14 +92,13 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  // Fetch Orders
-  Future<void> fetchOrders() async {
+  Future<void> fetchOrders({String? date, String? month, String? year}) async {
     _isLoadingOrders = true;
     _error = null;
     notifyListeners();
 
     try {
-      _orders = await _orderRepository.getOrders();
+      _orders = await _orderRepository.getOrders(date: date, month: month, year: year);
       _isLoadingOrders = false;
       notifyListeners();
     } catch (e) {

@@ -215,6 +215,22 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                                       color: AppColors.textPrimary,
                                                     ),
                                                   ),
+                                                  const SizedBox(height: 2),
+                                                  Row(
+                                                    children: [
+                                                      const Icon(Icons.storefront_rounded, size: 12, color: AppColors.primary),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        item.vendorName,
+                                                        style: const TextStyle(
+                                                          fontSize: 11,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: AppColors.primary,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 2),
                                                   Text(
                                                     '${item.unit} x ${item.quantity}',
                                                     style: const TextStyle(
@@ -342,6 +358,34 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                         ),
                                       ],
                                     ),
+                                  ),
+                                ),
+                                const SizedBox(height: Dimensions.sm),
+                                // Highlight Note
+                                Container(
+                                  padding: const EdgeInsets.all(Dimensions.md),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.shade50,
+                                    borderRadius: BorderRadius.circular(Dimensions.radiusMd),
+                                    border: Border.all(color: Colors.orange.shade200),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(Icons.info_outline, color: Colors.orange.shade800, size: 20),
+                                      const SizedBox(width: 8),
+                                      const Expanded(
+                                        child: Text(
+                                          "Note: This is not a fixed amount. The final amount may change according to the vendor. If it is reduced, it will reduce in your bill; if it is greater, it will be added. It depends on the vendor.",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black87,
+                                            height: 1.3,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(height: Dimensions.xxl),

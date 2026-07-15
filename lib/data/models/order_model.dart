@@ -103,12 +103,14 @@ class OrderItemModel {
   final double price;
   final int quantity;
   final String unit;
+  final String vendorName;
 
   OrderItemModel({
     required this.name,
     required this.price,
     required this.quantity,
     required this.unit,
+    required this.vendorName,
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
@@ -133,6 +135,7 @@ class OrderItemModel {
       price: parseDouble(json['price']),
       quantity: parseQuantity(json['quantity']),
       unit: json['unit']?.toString() ?? json['product']?['unit']?.toString() ?? 'kg',
+      vendorName: json['vendor_name']?.toString() ?? 'Unknown Vendor',
     );
   }
 
@@ -142,6 +145,7 @@ class OrderItemModel {
       'price': price,
       'quantity': quantity,
       'unit': unit,
+      'vendor_name': vendorName,
     };
   }
 }
