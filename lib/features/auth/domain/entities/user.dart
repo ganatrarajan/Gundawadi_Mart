@@ -8,6 +8,7 @@ class User {
   final String? shopPhoto;
   final String supportName;
   final String supportMobile;
+  final bool isClosed;
 
   User({
     required this.shopName,
@@ -19,9 +20,20 @@ class User {
     this.shopPhoto,
     required this.supportName,
     required this.supportMobile,
+    this.isClosed = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    bool parseBool(dynamic val) {
+      if (val == null) return false;
+      if (val is bool) return val;
+      if (val is int) return val == 1;
+      if (val is String) {
+        return val == '1' || val.toLowerCase() == 'true';
+      }
+      return false;
+    }
+
     return User(
       shopName: json['shop_name'] ?? '',
       ownerName: json['owner_name'] ?? '',
@@ -30,8 +42,9 @@ class User {
       openingTime: json['opening_time'] ?? '06:00 AM',
       closingTime: json['closing_time'] ?? '08:00 PM',
       shopPhoto: json['shop_photo'] ?? json['photo'],
-      supportName: json['support_name']?.toString() ?? 'Gundawadi Mart Support',
+      supportName: json['support_name']?.toString() ?? 'Gmart Partner Support',
       supportMobile: json['support_mobile']?.toString() ?? '9876543210',
+      isClosed: parseBool(json['is_closed']),
     );
   }
 
@@ -46,6 +59,7 @@ class User {
       'shop_photo': shopPhoto,
       'support_name': supportName,
       'support_mobile': supportMobile,
+      'is_closed': isClosed,
     };
   }
 }

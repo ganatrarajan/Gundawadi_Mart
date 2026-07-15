@@ -28,6 +28,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String? _shopPhotoUrl;
   File? _localImageFile;
   bool _isUploadingPhoto = false;
+  bool _isClosed = false;
 
   @override
   void initState() {
@@ -40,6 +41,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _openingTime = profile.openingTime;
       _closingTime = profile.closingTime;
       _shopPhotoUrl = profile.shopPhoto;
+      _isClosed = profile.isClosed;
     }
   }
 
@@ -121,17 +123,58 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  TimeOfDay _parseTimeString(String timeStr, TimeOfDay defaultTime) {
+    try {
+      final parts = timeStr.trim().split(' ');
+      if (parts.length != 2) return defaultTime;
+      
+      final timeParts = parts[0].split(':');
+      if (timeParts.length != 2) return defaultTime;
+      
+      int hour = int.parse(timeParts[0]);
+      final int minute = int.parse(timeParts[1]);
+      final isPm = parts[1].toUpperCase() == 'PM';
+      
+      if (isPm && hour != 12) {
+        hour += 12;
+      } else if (!isPm && hour == 12) {
+        hour = 0;
+      }
+      
+      return TimeOfDay(hour: hour, minute: minute);
+    } catch (_) {
+      return defaultTime;
+    }
+  }
+
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hour = time.hourOfPeriod;
+    final doubleHour = hour == 0 ? 12 : hour;
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    final minuteStr = time.minute.toString().padLeft(2, '0');
+    final hourStr = doubleHour.toString().padLeft(2, '0');
+    return '$hourStr:$minuteStr $period';
+  }
+
   Future<void> _selectTime(bool isOpening) async {
+    final initial = isOpening
+        ? _parseTimeString(_openingTime, const TimeOfDay(hour: 6, minute: 0))
+        : _parseTimeString(_closingTime, const TimeOfDay(hour: 20, minute: 0));
+
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: isOpening 
-          ? const TimeOfDay(hour: 6, minute: 0) 
-          : const TimeOfDay(hour: 20, minute: 0),
+      initialTime: initial,
+      builder: (BuildContext context, Widget? child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
     );
 
     if (picked != null && mounted) {
       setState(() {
-        final formattedTime = picked.format(context);
+        final formattedTime = _formatTimeOfDay(picked);
         if (isOpening) {
           _openingTime = formattedTime;
         } else {
@@ -155,8 +198,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       openingTime: _openingTime,
       closingTime: _closingTime,
       shopPhoto: _shopPhotoUrl,
-      supportName: authProvider.user?.supportName ?? 'Gundawadi Mart Support',
+      supportName: authProvider.user?.supportName ?? 'Gmart Partner Support',
       supportMobile: authProvider.user?.supportMobile ?? '9876543210',
+      isClosed: _isClosed,
     );
 
     final success = await provider.saveProfile(updatedUser);
@@ -380,6 +424,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Today Shop Closed Option Switch
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: AppColors.border, width: 1.5),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: SwitchListTile(
+                          title: const Text(
+                            'Today Shop Closed',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: const Text(
+                            'If enabled, the shop will show as closed in the customer app, ignoring operating hours.',
+                          ),
+                          activeColor: AppColors.primary,
+                          value: _isClosed,
+                          onChanged: (bool value) {
+                            setState(() {
+                              _isClosed = value;
+                            });
+                          },
+                        ),
                       ),
                       const SizedBox(height: 32),
                     ],

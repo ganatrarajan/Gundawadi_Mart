@@ -10,9 +10,16 @@ class OrderRepositoryImpl implements OrderRepository {
   OrderRepositoryImpl(this._dioClient);
 
   @override
-  Future<List<Order>> getOrders() async {
+  Future<List<Order>> getOrders({String? date, String? month, String? year}) async {
     try {
-      final response = await _dioClient.dio.get(ApiEndpoints.orders);
+      final response = await _dioClient.dio.get(
+        ApiEndpoints.orders,
+        queryParameters: {
+          if (date != null) 'date': date,
+          if (month != null) 'month': month,
+          if (year != null) 'year': year,
+        },
+      );
       final List list = response.data['data'] as List;
       return list.map((item) => Order.fromJson(item as Map<String, dynamic>)).toList();
     } on DioException catch (e) {

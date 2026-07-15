@@ -27,12 +27,32 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
 
   final List<String> _tabNames = ['ALL', 'PENDING', 'ACTIVE', 'COMPLETED'];
   String _searchQuery = '';
-  String _dateFilter = 'All'; // 'All', 'Today', 'Yesterday', 'Last 7 Days'
+  
+  String _selectedMonth = 'All'; // 'All', '01', '02', ..., '12'
+  String? _selectedDate; // 'YYYY-MM-DD'
+
+  final List<Map<String, String>> _months = [
+    {'name': 'All Months', 'value': 'All'},
+    {'name': 'January', 'value': '01'},
+    {'name': 'February', 'value': '02'},
+    {'name': 'March', 'value': '03'},
+    {'name': 'April', 'value': '04'},
+    {'name': 'May', 'value': '05'},
+    {'name': 'June', 'value': '06'},
+    {'name': 'July', 'value': '07'},
+    {'name': 'August', 'value': '08'},
+    {'name': 'September', 'value': '09'},
+    {'name': 'October', 'value': '10'},
+    {'name': 'November', 'value': '11'},
+    {'name': 'December', 'value': '12'},
+  ];
 
   @override
   void initState() {
     super.initState();
-    _dateFilter = widget.initialDateFilter;
+    if (widget.initialDateFilter == 'Today') {
+      _selectedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    }
     int initialIdx = 0;
     if (widget.initialStatusFilter == 'Pending') {
       initialIdx = 1;
@@ -43,7 +63,7 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
     
     // Automatically fetch latest orders when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<OrderProvider>(context, listen: false).fetchOrders();
+      _onFilterChanged();
     });
   }
 
@@ -73,6 +93,17 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
       body: Column(
         children: [
           _buildFilterPanel(),
+          Consumer<OrderProvider>(
+            builder: (context, provider, _) {
+              if (provider.orders.isEmpty) return const SizedBox.shrink();
+              return Column(
+                children: [
+                  _buildEarningsCard(provider.orders, currencyFormatter),
+                  _buildLimitIndicator(),
+                ],
+              );
+            },
+          ),
           Expanded(
             child: Consumer<OrderProvider>(
               builder: (context, provider, _) {
@@ -149,13 +180,12 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
   }
 
   List<Order> _getFilteredOrders(List<Order> list, String tab) {
-    // 1. Sort orders by date-time descending (newest first)
     final sortedList = List<Order>.from(list);
     sortedList.sort((a, b) {
       try {
         final dateA = DateTime.parse(a.createdAt);
         final dateB = DateTime.parse(b.createdAt);
-        return dateB.compareTo(dateA); // Descending (newest first)
+        return dateB.compareTo(dateA);
       } catch (e) {
         final idA = int.tryParse(a.id) ?? 0;
         final idB = int.tryParse(b.id) ?? 0;
@@ -163,7 +193,6 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
       }
     });
 
-    // 2. Filter by tab
     List<Order> tabFiltered;
     switch (tab) {
       case 'PENDING':
@@ -181,7 +210,6 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
         tabFiltered = sortedList;
     }
 
-    // 3. Filter by search query (Order ID or Customer Name)
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
       tabFiltered = tabFiltered.where((o) {
@@ -190,32 +218,65 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
       }).toList();
     }
 
-    // 4. Filter by date option
-    if (_dateFilter != 'All') {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final yesterday = today.subtract(const Duration(days: 1));
-      final sevenDaysAgo = today.subtract(const Duration(days: 7));
-
-      tabFiltered = tabFiltered.where((o) {
-        try {
-          final orderDate = DateTime.parse(o.createdAt);
-          if (_dateFilter == 'Today') {
-            return orderDate.isAfter(today);
-          } else if (_dateFilter == 'Yesterday') {
-            return orderDate.isAfter(yesterday) && orderDate.isBefore(today);
-          } else if (_dateFilter == 'Last 7 Days') {
-            return orderDate.isAfter(sevenDaysAgo);
-          }
-        } catch (_) {}
-        return true;
-      }).toList();
-    }
-
     return tabFiltered;
   }
 
+  void _onFilterChanged() {
+    String? monthParam;
+    if (_selectedMonth != 'All') {
+      monthParam = _selectedMonth;
+    }
+    String? yearParam;
+    if (monthParam != null) {
+      yearParam = DateTime.now().year.toString();
+    }
+
+    Provider.of<OrderProvider>(context, listen: false).fetchOrders(
+      date: _selectedDate,
+      month: monthParam,
+      year: yearParam,
+    );
+  }
+
+  Future<void> _selectCustomDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      final formatted = DateFormat('yyyy-MM-dd').format(picked);
+      setState(() {
+        _selectedDate = formatted;
+        _selectedMonth = 'All';
+      });
+      _onFilterChanged();
+    }
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _selectedMonth = 'All';
+      _selectedDate = null;
+      _searchQuery = '';
+    });
+    _onFilterChanged();
+  }
+
   Widget _buildFilterPanel() {
+    final hasActiveFilter = _selectedMonth != 'All' || _selectedDate != null || _searchQuery.isNotEmpty;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
@@ -228,73 +289,211 @@ class _OrderListScreenState extends State<OrderListScreen> with SingleTickerProv
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          // Search Field
-          Expanded(
-            child: Container(
-              height: 45,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: TextField(
-                onChanged: (val) {
-                  setState(() {
-                    _searchQuery = val;
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: 'Search ID, Customer...',
-                  hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, color: Colors.grey, size: 18),
-                          onPressed: () {
-                            setState(() {
-                              _searchQuery = '';
-                            });
-                          },
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: TextField(
+                    onChanged: (val) {
+                      setState(() {
+                        _searchQuery = val;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      hintText: 'Search ID, Customer...',
+                      hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                      prefixIcon: Icon(Icons.search, color: Colors.grey),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 45,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedMonth,
+                      icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
+                      isExpanded: true,
+                      style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedMonth = newValue;
+                            _selectedDate = null;
+                          });
+                          _onFilterChanged();
+                        }
+                      },
+                      items: _months.map<DropdownMenuItem<String>>((Map<String, String> m) {
+                        return DropdownMenuItem<String>(
+                          value: m['value'],
+                          child: Text(m['name']!),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: InkWell(
+                  onTap: () => _selectCustomDate(context),
+                  child: Container(
+                    height: 45,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _selectedDate != null ? _selectedDate! : 'Choose Date',
+                            style: TextStyle(
+                              color: _selectedDate != null ? AppColors.primary : AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const Icon(Icons.calendar_month, color: AppColors.primary, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (hasActiveFilter) ...[
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: _clearFilters,
+                  child: const Text('Reset', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  double _calculateEarnings(List<Order> list) {
+    double total = 0.0;
+    for (final order in list) {
+      final statusLower = order.status.toLowerCase();
+      if (statusLower == 'completed' || statusLower == 'delivered') {
+        total += order.totalAmount;
+      }
+    }
+    return total;
+  }
+
+  Widget _buildEarningsCard(List<Order> list, NumberFormat currencyFormatter) {
+    final completedOrders = list.where((o) => ['completed', 'delivered'].contains(o.status.toLowerCase())).toList();
+    final totalEarnings = _calculateEarnings(list);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, Color(0xFF1B5E20)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'TOTAL COMPLETED EARNINGS',
+                style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                currencyFormatter.format(totalEarnings),
+                style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 16),
+                const SizedBox(width: 4),
+                Text(
+                  '${completedOrders.length} Orders',
+                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 12),
-          // Date Filter Dropdown
-          Container(
-            height: 45,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _dateFilter,
-                icon: const Icon(Icons.filter_list, color: AppColors.primary),
-                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _dateFilter = newValue;
-                    });
-                  }
-                },
-                items: <String>['All', 'Today', 'Yesterday', 'Last 7 Days']
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLimitIndicator() {
+    final isFiltering = _selectedMonth != 'All' || _selectedDate != null;
+    if (isFiltering) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        border: Border.all(color: Colors.amber.shade200),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: Colors.amber.shade800, size: 18),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Showing last 10 orders by default. To view older orders, choose a date or select a month filter.',
+              style: TextStyle(color: Colors.black87, fontSize: 11, height: 1.3),
             ),
           ),
         ],

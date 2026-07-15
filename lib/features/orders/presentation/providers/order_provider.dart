@@ -24,13 +24,13 @@ class OrderProvider extends ChangeNotifier {
     });
   }
 
-  Future<void> fetchOrders() async {
+  Future<void> fetchOrders({String? date, String? month, String? year}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _orders = await _orderRepository.getOrders();
+      _orders = await _orderRepository.getOrders(date: date, month: month, year: year);
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {

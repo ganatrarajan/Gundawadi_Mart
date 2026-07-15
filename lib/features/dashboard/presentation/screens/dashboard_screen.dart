@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/responsive_layout.dart';
 import 'package:mart/features/auth/presentation/providers/auth_provider.dart';
+import 'package:mart/features/auth/domain/entities/user.dart';
+import 'package:mart/features/profile/presentation/providers/profile_provider.dart';
 import '../providers/dashboard_provider.dart';
 import '../../../products/presentation/screens/product_list_screen.dart';
 import '../../../orders/presentation/screens/order_list_screen.dart';
@@ -13,11 +15,53 @@ import '../../../notifications/presentation/screens/notification_list_screen.dar
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
+  bool _computeIsOpen(User? user) {
+    if (user == null) return false;
+    if (user.isClosed) return false;
+    
+    try {
+      final now = DateTime.now();
+      
+      DateTime? parseTime(String timeStr) {
+        final parts = timeStr.trim().split(' ');
+        if (parts.length != 2) return null;
+        
+        final timeParts = parts[0].split(':');
+        if (timeParts.length != 2) return null;
+        
+        int hr = int.parse(timeParts[0]);
+        final int min = int.parse(timeParts[1]);
+        final isPm = parts[1].toUpperCase() == 'PM';
+        
+        if (isPm && hr != 12) {
+          hr += 12;
+        } else if (!isPm && hr == 12) {
+          hr = 0;
+        }
+        
+        return DateTime(now.year, now.month, now.day, hr, min);
+      }
+      
+      final open = parseTime(user.openingTime);
+      final close = parseTime(user.closingTime);
+      
+      if (open == null || close == null) return true;
+      
+      if (close.isBefore(open)) {
+        return now.isAfter(open) || now.isBefore(close);
+      } else {
+        return now.isAfter(open) && now.isBefore(close);
+      }
+    } catch (_) {
+      return true;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final auth = Provider.of<AuthProvider>(context);
-    final shopName = auth.user?.shopName ?? 'Gundawadi Mart Vendor';
+    final shopName = auth.user?.shopName ?? 'Gmart Partner';
     final ownerName = auth.user?.ownerName ?? 'Vendor';
     final currencyFormatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
 
@@ -37,6 +81,7 @@ class DashboardScreen extends StatelessWidget {
             icon: const Icon(Icons.refresh, size: 28),
             onPressed: () {
               Provider.of<DashboardProvider>(context, listen: false).fetchStats();
+              Provider.of<ProfileProvider>(context, listen: false).fetchProfile();
             },
           ),
           IconButton(
@@ -47,7 +92,12 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => Provider.of<DashboardProvider>(context, listen: false).fetchStats(),
+        onRefresh: () async {
+          await Provider.of<DashboardProvider>(context, listen: false).fetchStats();
+          if (context.mounted) {
+            await Provider.of<ProfileProvider>(context, listen: false).fetchProfile();
+          }
+        },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: ResponsiveLayout(
@@ -99,6 +149,30 @@ class DashboardScreen extends StatelessWidget {
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     fontWeight: FontWeight.w500,
                                   ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: auth.user?.isClosed == true
+                                            ? Colors.red
+                                            : (_computeIsOpen(auth.user) ? AppColors.primary : Colors.orange),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        auth.user?.isClosed == true
+                                            ? 'CLOSED TODAY (MANUAL)'
+                                            : (_computeIsOpen(auth.user) ? 'SHOP OPEN' : 'SHOP CLOSED (HOURS)'),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -283,6 +357,40 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   
+                  // Large Quick Access Shortcut for Sales & Earnings History
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1B5E20), // Dark green for earnings
+                      minimumSize: const Size(double.infinity, 70),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      elevation: 4,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const OrderListScreen(
+                            initialStatusFilter: 'Completed',
+                            initialDateFilter: 'All',
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.analytics_outlined, size: 30, color: Colors.white),
+                    label: const Text(
+                      'SALES & EARNINGS HISTORY',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
                   // Large Quick Access Shortcut for Orders list
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
@@ -385,7 +493,7 @@ class DashboardScreen extends StatelessWidget {
       builder: (BuildContext ctx) {
         return AlertDialog(
           title: const Text('Log Out?'),
-          content: const Text('Are you sure you want to log out of Gundawadi Mart? You will not receive push notifications until you log in again.'),
+          content: const Text('Are you sure you want to log out of Gmart Partner? You will not receive push notifications until you log in again.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),

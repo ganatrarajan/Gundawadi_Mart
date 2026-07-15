@@ -47,6 +47,13 @@ class FcmService {
         print('User granted permission: ${settings.authorizationStatus}');
       }
 
+      // Enable foreground notification banners (so user receives notification when app is open)
+      await _firebaseMessaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
       // Get FCM Token
       String? token = await _firebaseMessaging.getToken();
       if (kDebugMode) {

@@ -1,6 +1,6 @@
 class ApiEndpoints {
   // Base Laravel API URL
-  static const String baseUrl = 'http://192.168.1.11:8000/api/vendor';
+  static const String baseUrl = 'http://192.168.1.10:8000/api/vendor';
 
   // Auth endpoints
   static const String login = '/login';

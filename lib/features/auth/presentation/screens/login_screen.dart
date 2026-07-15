@@ -68,27 +68,35 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 36),
                           // Branding / Icon
                           Container(
-                            padding: const EdgeInsets.all(20),
+                            width: 110,
+                            height: 110,
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
+                              color: Colors.white,
                               shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                )
+                              ],
                             ),
-                            child: const Icon(
-                              Icons.storefront_rounded,
-                              size: 70,
-                              color: AppColors.primary,
+                            clipBehavior: Clip.antiAlias,
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              fit: BoxFit.cover,
                             ),
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Gundawadi Mart',
+                            'Gmart Partner',
                             style: theme.textTheme.headlineLarge?.copyWith(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
                           Text(
-                            'Vendor Partner Application',
+                            'Merchant Dashboard Application',
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: AppColors.textSecondary,
                             ),

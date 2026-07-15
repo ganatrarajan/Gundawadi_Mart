@@ -44,6 +44,7 @@ class AuthRepositoryImpl implements AuthRepository {
         openingTime: user.openingTime,
         closingTime: user.closingTime,
         shopPhoto: user.shopPhoto,
+        isClosed: user.isClosed,
       );
 
       return user;
@@ -76,8 +77,9 @@ class AuthRepositoryImpl implements AuthRepository {
         openingTime: details['openingTime'] ?? '06:00 AM',
         closingTime: details['closingTime'] ?? '08:00 PM',
         shopPhoto: details['shopPhoto'],
-        supportName: details['supportName'] ?? 'Gundawadi Mart Support',
+        supportName: details['supportName'] ?? 'Gmart Partner Support',
         supportMobile: details['supportMobile'] ?? '9876543210',
+        isClosed: details['isClosed'] ?? false,
       );
     }
     return null;

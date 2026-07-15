@@ -19,6 +19,7 @@ class SharedPrefsService {
   static const String _keyOpeningTime = 'opening_time';
   static const String _keyClosingTime = 'closing_time';
   static const String _keyShopPhoto = 'shop_photo';
+  static const String _keyIsClosed = 'is_closed';
 
   // Token operations
   static Future<void> saveToken(String token) async {
@@ -51,6 +52,7 @@ class SharedPrefsService {
     required String openingTime,
     required String closingTime,
     String? shopPhoto,
+    bool isClosed = false,
   }) async {
     await _prefs.setString(_keyShopName, shopName);
     await _prefs.setString(_keyOwnerName, ownerName);
@@ -58,6 +60,7 @@ class SharedPrefsService {
     await _prefs.setString(_keyAddress, address);
     await _prefs.setString(_keyOpeningTime, openingTime);
     await _prefs.setString(_keyClosingTime, closingTime);
+    await _prefs.setBool(_keyIsClosed, isClosed);
     if (shopPhoto != null) {
       await _prefs.setString(_keyShopPhoto, shopPhoto);
     } else {
@@ -65,7 +68,7 @@ class SharedPrefsService {
     }
   }
 
-  static Map<String, String?> getVendorDetails() {
+  static Map<String, dynamic> getVendorDetails() {
     return {
       'shopName': _prefs.getString(_keyShopName),
       'ownerName': _prefs.getString(_keyOwnerName),
@@ -74,6 +77,7 @@ class SharedPrefsService {
       'openingTime': _prefs.getString(_keyOpeningTime),
       'closingTime': _prefs.getString(_keyClosingTime),
       'shopPhoto': _prefs.getString(_keyShopPhoto),
+      'isClosed': _prefs.getBool(_keyIsClosed) ?? false,
     };
   }
 
@@ -88,5 +92,6 @@ class SharedPrefsService {
     await _prefs.remove(_keyOpeningTime);
     await _prefs.remove(_keyClosingTime);
     await _prefs.remove(_keyShopPhoto);
+    await _prefs.remove(_keyIsClosed);
   }
 }

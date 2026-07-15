@@ -44,11 +44,11 @@ void main() async {
   await SharedPrefsService.init();
   await FcmService.init();
 
-  runApp(const MyApp());
+  runApp(const GmartPartnerApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class GmartPartnerApp extends StatelessWidget {
+  const GmartPartnerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +88,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'Gundawadi Mart Vendor',
+        title: 'Gmart Partner',
         theme: AppTheme.lightTheme,
         debugShowCheckedModeBanner: false,
         home: const AuthenticationWrapper(),

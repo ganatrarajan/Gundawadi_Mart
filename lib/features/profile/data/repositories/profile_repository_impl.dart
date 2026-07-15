@@ -25,6 +25,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         openingTime: user.openingTime,
         closingTime: user.closingTime,
         shopPhoto: user.shopPhoto,
+        isClosed: user.isClosed,
       );
       
       return user;
@@ -51,6 +52,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         openingTime: user.openingTime,
         closingTime: user.closingTime,
         shopPhoto: user.shopPhoto,
+        isClosed: user.isClosed,
       );
 
       return user;

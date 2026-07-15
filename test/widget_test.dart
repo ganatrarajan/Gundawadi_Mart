@@ -3,7 +3,7 @@ import 'package:mart/features/auth/domain/entities/user.dart';
 import 'package:mart/features/products/domain/entities/product.dart';
 
 void main() {
-  group('FreshMandi Model Serialization Tests', () {
+  group('Gmart Partner Model Serialization Tests', () {
     test('User.fromJson should correctly parse a vendor profile', () {
       final json = {
         'shop_name': 'Gundawadi Market Veggies',
@@ -13,6 +13,7 @@ void main() {
         'opening_time': '06:00 AM',
         'closing_time': '08:00 PM',
         'shop_photo': 'https://example.com/photo.jpg',
+        'is_closed': true,
       };
 
       final user = User.fromJson(json);
@@ -24,6 +25,7 @@ void main() {
       expect(user.openingTime, '06:00 AM');
       expect(user.closingTime, '08:00 PM');
       expect(user.shopPhoto, 'https://example.com/photo.jpg');
+      expect(user.isClosed, true);
     });
 
     test('Product.fromJson and copyWith should function correctly', () {
