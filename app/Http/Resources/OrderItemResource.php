@@ -17,6 +17,7 @@ class OrderItemResource extends JsonResource
             'unit' => $this->unit,
             'quantity' => $this->quantity,
             'total_price' => $this->total_price,
+            'vendor_name' => $this->order && $this->order->vendor ? $this->order->vendor->shop_name : 'Unknown Vendor',
         ];
     }
 }

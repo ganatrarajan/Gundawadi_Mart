@@ -211,7 +211,8 @@ class CustomerApiController extends Controller
     public function getOrders(Request $request)
     {
         $customerId = $request->user()->id;
-        $orders = $this->orderRepository->getCustomerOrders($customerId);
+        $filters = $request->only(['date', 'month', 'year']);
+        $orders = $this->orderRepository->getCustomerOrders($customerId, $filters);
         return $this->successResponse(OrderResource::collection($orders), 'Orders history fetched.');
     }
 

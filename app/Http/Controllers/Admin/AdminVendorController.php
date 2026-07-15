@@ -34,7 +34,10 @@ class AdminVendorController extends Controller
             'category_id' => 'required|exists:categories,id',
             'opening_time' => 'required|string',
             'closing_time' => 'required|string',
+            'is_closed' => 'nullable|boolean',
         ]);
+
+        $data['is_closed'] = $request->has('is_closed') ? (bool)$request->is_closed : false;
 
         if ($request->hasFile('shop_photo')) {
             $data['shop_photo'] = $request->file('shop_photo')->store('vendors', 'public');
@@ -117,7 +120,10 @@ class AdminVendorController extends Controller
             'category_id' => 'required|exists:categories,id',
             'opening_time' => 'required|string',
             'closing_time' => 'required|string',
+            'is_closed' => 'nullable|boolean',
         ]);
+
+        $data['is_closed'] = $request->has('is_closed') ? (bool)$request->is_closed : false;
 
         if ($request->hasFile('shop_photo')) {
             if ($vendor->shop_photo) {

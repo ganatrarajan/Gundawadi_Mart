@@ -20,6 +20,8 @@ class Product extends Model
     ];
 
     protected $casts = [
+        'category_id' => 'integer',
+        'vendor_id' => 'integer',
         'today_price' => 'decimal:2',
     ];
 

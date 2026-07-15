@@ -27,6 +27,9 @@ class Order extends Model
     ];
 
     protected $casts = [
+        'customer_id' => 'integer',
+        'master_order_id' => 'integer',
+        'vendor_id' => 'integer',
         'subtotal' => 'decimal:2',
         'delivery_charge' => 'decimal:2',
         'handling_charge' => 'decimal:2',

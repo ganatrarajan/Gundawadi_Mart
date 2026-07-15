@@ -116,21 +116,65 @@ class EloquentOrderRepository implements OrderRepositoryInterface
         return MasterOrder::with(['customer', 'address', 'vendorOrders.vendor', 'vendorOrders.items.product'])->find($id);
     }
 
-    public function getCustomerOrders($customerId)
+    public function getCustomerOrders($customerId, array $filters = [])
     {
-        return MasterOrder::where('customer_id', $customerId)
+        $query = MasterOrder::where('customer_id', $customerId)
             ->with(['vendorOrders.vendor', 'vendorOrders.items'])
-            ->orderBy('id', 'desc')
-            ->get();
+            ->orderBy('id', 'desc');
+
+        $hasFilter = false;
+
+        if (!empty($filters['date'])) {
+            $query->whereDate('created_at', $filters['date']);
+            $hasFilter = true;
+        }
+
+        if (!empty($filters['month'])) {
+            $query->whereMonth('created_at', $filters['month']);
+            $hasFilter = true;
+        }
+
+        if (!empty($filters['year'])) {
+            $query->whereYear('created_at', $filters['year']);
+            $hasFilter = true;
+        }
+
+        if (!$hasFilter) {
+            $query->limit(10);
+        }
+
+        return $query->get();
     }
 
-    public function getVendorOrders($vendorId)
+    public function getVendorOrders($vendorId, array $filters = [])
     {
-        return Order::where('vendor_id', $vendorId)
+        $query = Order::where('vendor_id', $vendorId)
             ->where('status', '!=', 'pending')
             ->with(['customer', 'items'])
-            ->orderBy('id', 'desc')
-            ->get();
+            ->orderBy('id', 'desc');
+
+        $hasFilter = false;
+
+        if (!empty($filters['date'])) {
+            $query->whereDate('created_at', $filters['date']);
+            $hasFilter = true;
+        }
+
+        if (!empty($filters['month'])) {
+            $query->whereMonth('created_at', $filters['month']);
+            $hasFilter = true;
+        }
+
+        if (!empty($filters['year'])) {
+            $query->whereYear('created_at', $filters['year']);
+            $hasFilter = true;
+        }
+
+        if (!$hasFilter) {
+            $query->limit(10);
+        }
+
+        return $query->get();
     }
 
     public function getAllOrders(array $filters = [])
@@ -177,7 +221,8 @@ class EloquentOrderRepository implements OrderRepositoryInterface
         if ($order->master_order_id) {
             $masterOrder = $order->masterOrder;
             if ($masterOrder) {
-                $allSubOrders = $masterOrder->vendorOrders;
+                // Load fresh sub-orders from the database to ensure we get the latest status updates
+                $allSubOrders = $masterOrder->vendorOrders()->get();
                 
                 // Check if all sub-orders are ready_for_pickup, delivered, completed or cancelled
                 $allReady = true;

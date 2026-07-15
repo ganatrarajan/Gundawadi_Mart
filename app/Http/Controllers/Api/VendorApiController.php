@@ -95,10 +95,10 @@ class VendorApiController extends Controller
 
     public function updateProduct(StoreProductRequest $request, $id)
     {
-        $vendorId = $request->user()->id;
+        $vendorId = (int) $request->user()->id;
         $product = $this->productRepository->findById($id);
 
-        if (!$product || $product->vendor_id !== $vendorId) {
+        if (!$product || (int) $product->vendor_id !== $vendorId) {
             return $this->errorResponse('Product not found.', 404);
         }
 
@@ -119,10 +119,10 @@ class VendorApiController extends Controller
 
     public function updatePrice(UpdateProductPriceRequest $request, $id)
     {
-        $vendorId = $request->user()->id;
+        $vendorId = (int) $request->user()->id;
         $product = $this->productRepository->findById($id);
 
-        if (!$product || $product->vendor_id !== $vendorId) {
+        if (!$product || (int) $product->vendor_id !== $vendorId) {
             return $this->errorResponse('Product not found.', 404);
         }
 
@@ -150,16 +150,17 @@ class VendorApiController extends Controller
     public function getOrders(Request $request)
     {
         $vendorId = $request->user()->id;
-        $orders = $this->orderRepository->getVendorOrders($vendorId);
+        $filters = $request->only(['date', 'month', 'year']);
+        $orders = $this->orderRepository->getVendorOrders($vendorId, $filters);
         return $this->successResponse(OrderResource::collection($orders), 'Orders fetched.');
     }
 
     public function getOrderDetails($id, Request $request)
     {
-        $vendorId = $request->user()->id;
+        $vendorId = (int) $request->user()->id;
         $order = $this->orderRepository->findById($id);
 
-        if (!$order || $order->vendor_id !== $vendorId) {
+        if (!$order || (int) $order->vendor_id !== $vendorId) {
             return $this->errorResponse('Order not found.', 404);
         }
 
@@ -168,10 +169,10 @@ class VendorApiController extends Controller
 
     public function updateOrderStatus(Request $request, $id)
     {
-        $vendorId = $request->user()->id;
+        $vendorId = (int) $request->user()->id;
         $order = $this->orderRepository->findById($id);
 
-        if (!$order || $order->vendor_id !== $vendorId) {
+        if (!$order || (int) $order->vendor_id !== $vendorId) {
             return $this->errorResponse('Order not found.', 404);
         }
 
@@ -257,9 +258,13 @@ class VendorApiController extends Controller
             'shop_address' => 'required|string|max:500',
             'opening_time' => 'required|string',
             'closing_time' => 'required|string',
+            'is_closed' => 'nullable|boolean',
         ]);
 
-        $data = $request->only(['shop_name', 'owner_name', 'shop_address', 'opening_time', 'closing_time']);
+        $data = $request->only(['shop_name', 'owner_name', 'shop_address', 'opening_time', 'closing_time', 'is_closed']);
+        if ($request->has('is_closed')) {
+            $data['is_closed'] = filter_var($request->input('is_closed'), FILTER_VALIDATE_BOOLEAN);
+        }
         $updatedVendor = $this->vendorRepository->update($vendorId, $data);
 
         return $this->successResponse(new \App\Http\Resources\VendorResource($updatedVendor), 'Profile updated successfully.');
@@ -290,11 +295,11 @@ class VendorApiController extends Controller
     // ==========================================
     public function toggleStatusApi(Request $request)
     {
-        $vendorId = $request->user()->id;
+        $vendorId = (int) $request->user()->id;
         $id = $request->input('id');
         $product = $this->productRepository->findById($id);
 
-        if (!$product || $product->vendor_id !== $vendorId) {
+        if (!$product || (int) $product->vendor_id !== $vendorId) {
             return $this->errorResponse('Product not found.', 404);
         }
 
@@ -306,11 +311,11 @@ class VendorApiController extends Controller
 
     public function updatePriceApi(Request $request)
     {
-        $vendorId = $request->user()->id;
+        $vendorId = (int) $request->user()->id;
         $id = $request->input('id');
         $product = $this->productRepository->findById($id);
 
-        if (!$product || $product->vendor_id !== $vendorId) {
+        if (!$product || (int) $product->vendor_id !== $vendorId) {
             return $this->errorResponse('Product not found.', 404);
         }
 
@@ -322,52 +327,18 @@ class VendorApiController extends Controller
 
     public function updateOrderStatusApi(Request $request)
     {
-        $vendorId = $request->user()->id;
         $id = $request->input('id');
-        $order = $this->orderRepository->findById($id);
-
-        if (!$order || $order->vendor_id !== $vendorId) {
-            return $this->errorResponse('Order not found.', 404);
-        }
-
         $status = $request->input('status');
         
         $mappedStatus = strtolower($status);
         if ($mappedStatus === 'ready for pickup') {
             $mappedStatus = 'ready_for_pickup';
         }
+        
+        // Merge the normalized status back so the validation and repository use it
+        $request->merge(['status' => $mappedStatus]);
 
-        $updatedOrder = $this->orderRepository->updateStatus($id, $mappedStatus);
-
-        // Notify Customer
-        $statusTexts = [
-            'accepted' => 'accepted and is being processed.',
-            'rejected' => 'rejected by the vendor.',
-            'cancelled' => 'cancelled.',
-            'packing' => 'currently being packed.',
-            'ready_for_pickup' => 'packed and is ready for pickup.',
-            'completed' => 'completed and delivered.',
-        ];
-
-        FcmService::send(
-            'customer',
-            $order->customer_id,
-            $order->customer->device_token,
-            "Order #{$order->id} Update",
-            "Your order has been " . ($statusTexts[$mappedStatus] ?? $mappedStatus)
-        );
-
-        if ($mappedStatus === 'ready_for_pickup') {
-            FcmService::send(
-                'admin',
-                1,
-                null,
-                "Delivery Pickup Alert",
-                "Order #{$order->id} from {$order->vendor->shop_name} is ready for pickup. Please allocate delivery."
-            );
-        }
-
-        return $this->successResponse(new OrderResource($updatedOrder), "Order status updated to {$mappedStatus}.");
+        return $this->updateOrderStatus($request, $id);
     }
 
     public function updateProductPut(Request $request)
@@ -401,14 +372,14 @@ class VendorApiController extends Controller
 
     public function updateOrderItemPrice(Request $request)
     {
-        $vendorId = $request->user()->id;
+        $vendorId = (int) $request->user()->id;
         $orderItemId = $request->input('order_item_id');
         $newPrice = (double) $request->input('price');
 
         $orderItem = \App\Models\OrderItem::findOrFail($orderItemId);
         $order = $orderItem->order;
 
-        if ($order->vendor_id !== $vendorId) {
+        if ((int) $order->vendor_id !== $vendorId) {
             return $this->errorResponse('Unauthorized.', 403);
         }
 
