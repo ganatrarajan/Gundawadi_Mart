@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../home/home_screen.dart';
+import '../../widgets/support_floating_widget.dart';
 import 'registration_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -216,6 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+      floatingActionButton: const SupportFloatingWidget(),
     );
   }
 }

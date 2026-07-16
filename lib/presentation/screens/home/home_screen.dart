@@ -11,6 +11,7 @@ import '../../widgets/empty_state_widget.dart';
 import '../../widgets/error_state_widget.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/vendor_card.dart';
+import '../../widgets/support_floating_widget.dart';
 import '../cart/cart_screen.dart';
 import '../order/my_orders_screen.dart';
 import '../order/order_details_screen.dart';
@@ -297,6 +298,7 @@ class _HomeTabState extends State<_HomeTab> {
           _buildActiveOrderBanner(context),
         ],
       ),
+      floatingActionButton: const SupportFloatingWidget(),
     );
   }
 
